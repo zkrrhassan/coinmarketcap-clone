@@ -16,6 +16,7 @@ import {
 	Label,
 	SaveButton,
 } from './EditProfileForm.styled';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 const editUserSchema = z.object({
 	displayName: z.string().max(20).nullable(),
@@ -34,12 +35,45 @@ const EditProfileForm = () => {
 		resolver: zodResolver(editUserSchema),
 		mode: 'onSubmit',
 	});
-	const [user, setUser] = useState<User | null>(null);
 	const [cropperOpen, setCropperOpen] = useState<boolean>(false);
 	const [imageToCrop, setImageToCrop] = useState<string | null>(null);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
-	const { data, status } = useSession();
-
+	const { data: session, status } = useSession();
+	const name = session?.user.name;
+	const { data: user, refetch } = useQuery({
+		queryKey: ['userEdit', name],
+		queryFn: async () =>
+			(
+				await axios.get(`/api/user/get`, {
+					params: {
+						name,
+					},
+				})
+			).data,
+		enabled: !!name,
+		refetchOnWindowFocus: false,
+	});
+	const uploadImage = useMutation({
+		mutationFn: async (body: FormData) =>
+			(await axios.post<{ imageName: string }>('/api/images/upload', body))
+				.data,
+	});
+	const saveChanges = useMutation({
+		mutationFn: async (userData: EditUserInputs) => {
+			console.log(userData);
+			await axios.post(
+				'/api/user/update',
+				{
+					...userData,
+				},
+				{
+					params: {
+						userId: session?.user.id,
+					},
+				}
+			);
+		},
+	});
 	const { push } = useRouter();
 	const { ref, ...rest } = register('image', {
 		onChange: async (e: ChangeEvent<HTMLInputElement>) => {
@@ -56,10 +90,6 @@ const EditProfileForm = () => {
 	});
 
 	useEffect(() => {
-		fetchUser();
-	}, []);
-
-	useEffect(() => {
 		fillValues();
 	}, [user]);
 
@@ -68,18 +98,6 @@ const EditProfileForm = () => {
 			push('/');
 		}
 	}, [status]);
-
-	const fetchUser = async () => {
-		const user = await (
-			await axios.get(`/api/user/get/`, {
-				params: {
-					name: data?.user.name,
-				},
-			})
-		).data;
-
-		setUser(user);
-	};
 
 	const handleCloseCropper = () => {
 		setCropperOpen(false);
@@ -90,17 +108,6 @@ const EditProfileForm = () => {
 		setValue('image', image);
 
 		setCropperOpen(false);
-	};
-
-	const convertToBase64 = (file: File) => {
-		return new Promise<string>((resolve, reject) => {
-			const reader = new FileReader();
-
-			reader.readAsDataURL(file);
-
-			reader.onload = () => resolve(reader.result as string);
-			reader.onerror = (error) => reject(error);
-		});
 	};
 
 	const openFileWindow = () => {
@@ -138,28 +145,20 @@ const EditProfileForm = () => {
 			const body = new FormData();
 			body.append('file', image);
 
-			const { data } = await axios.post('/api/images/upload', body);
-			imageName = data.imageName;
+			uploadImage.mutate(body);
+			imageName = uploadImage.data?.imageName;
 		}
 
-		await axios.post(
-			'/api/user/update',
-			{
-				biography,
-				birthday,
-				displayName,
-				name,
-				website,
-				image: imageName,
-			},
-			{
-				params: {
-					userId: data?.user.id,
-				},
-			}
-		);
+		saveChanges.mutate({
+			biography,
+			birthday,
+			displayName,
+			name,
+			website,
+			image: imageName,
+		});
 
-		fetchUser();
+		refetch();
 	};
 
 	return (
@@ -167,10 +166,12 @@ const EditProfileForm = () => {
 			<InputWrapper>
 				<Label as="p">Your Avatar</Label>
 				<AvatarWrapper>
-					{data && (
+					{session && (
 						<ProfileImage
-							source={data.user.image && `/uploads/${data.user.image}.jpeg`}
-							firstLetter={data.user.name.charAt(0)}
+							source={
+								session.user.image && `/uploads/${session.user.image}.jpeg`
+							}
+							firstLetter={session.user.name.charAt(0)}
 							width={64}
 							height={64}
 							variant="medium"

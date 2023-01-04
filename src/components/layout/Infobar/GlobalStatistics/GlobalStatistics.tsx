@@ -1,8 +1,9 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { formatLargeValue, formatPercentageValue } from 'utils/formatValues';
 import GlobalStatistic from 'components/layout/Infobar/GlobalStatistics/GlobalStatistic';
 import { GlobalStatisticsContainer } from 'components/layout/Infobar/GlobalStatistics/GlobalStatistics.styled';
+import { useQuery } from '@tanstack/react-query';
 
 interface CoinsGlobal {
 	active_cryptocurrencies: number;
@@ -19,19 +20,10 @@ interface CoinsGlobal {
 }
 
 const GlobalStatistics = () => {
-	const [global, setGlobal] = useState<CoinsGlobal | null>(null);
-
-	useEffect(() => {
-		const fetchInfo = async () => {
-			try {
-				const data = (await axios.get('/api/global')).data;
-				setGlobal(data);
-			} catch (error) {
-				console.error(error);
-			}
-		};
-		fetchInfo();
-	}, []);
+	const { data: global } = useQuery({
+		queryKey: ['global'],
+		queryFn: async () => (await axios.get<CoinsGlobal>('/api/global')).data,
+	});
 
 	return (
 		global && (

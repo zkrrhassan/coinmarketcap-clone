@@ -1,12 +1,11 @@
 import axios from 'axios';
 import Table, { TableColumn } from 'components/Table/Table';
-import { ColumnDef } from '@tanstack/react-table';
 import { Sparklines, SparklinesLine } from 'react-sparklines';
 import * as S from './HomeTable.styled';
 import Link from 'next/link';
 import Image from 'next/image';
 import PercentageChange from 'components/PercentageChange/PercentageChange';
-import AddToWatchlist from 'components/AddToWatchlist/AddToWatchlist';
+import WatchlistButton from 'components/WatchlistButton/WatchlistButton';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { Watchlist } from '@prisma/client';
@@ -14,6 +13,7 @@ import { startsWithHttp } from 'utils/formatLink';
 import { CoinData } from 'pages';
 import { formatLargeValue, formatPrice } from 'utils/formatValues';
 import { useTheme } from 'styled-components';
+import { useQuery } from '@tanstack/react-query';
 
 export interface CoinOnWatchlist extends CoinData {
 	isOnWatchlist: boolean;
@@ -26,66 +26,54 @@ interface HomeTableProps {
 const HomeTable = ({ initialCoins }: HomeTableProps) => {
 	const [coins, setCoins] =
 		useState<(CoinOnWatchlist | CoinData)[]>(initialCoins);
-	const { status, data } = useSession();
+	const { data: session, status } = useSession();
+	const id = session?.user.id;
+	const { refetch } = useQuery({
+		queryKey: ['watchlistCoins', status],
+		queryFn: async () => {
+			const data = (
+				await axios.get<Watchlist>('/api/watchlist/get', {
+					params: {
+						userId: id,
+						isMain: true,
+					},
+				})
+			).data.coinIds;
+
+			setCoins(processCoinsData(data));
+			return data;
+		},
+		enabled: !!id,
+		refetchOnWindowFocus: false,
+	});
 	const {
 		colors: { upColor, downColor },
 	} = useTheme();
 
-	const processCoinsData = (watchlist: Watchlist) => {
+	const processCoinsData = (coins?: Watchlist['coinIds']) => {
+		if (!coins) return initialCoins;
 		return initialCoins.map((coin) => {
 			return {
 				...coin,
-				isOnWatchlist: watchlist?.coinIds.includes(coin.id) ?? false,
+				isOnWatchlist: coins.includes(coin.id) ?? false,
 			};
 		});
 	};
-
-	const fetchWatchlist = async () => {
-		//reset coins if not logged in
-		if (status !== 'authenticated') {
-			setCoins(initialCoins);
-			return;
-		}
-		//getting main watchlist
-		const watchlist = (
-			await axios.get('/api/watchlist/get', {
-				params: {
-					userId: data.user?.id,
-					isMain: true,
-				},
-			})
-		).data;
-		//updating coins status
-		setCoins(processCoinsData(watchlist));
-	};
-
-	useEffect(() => {
-		//fetch coins on status change (logged in/out)
-		fetchWatchlist();
-	}, [status]);
 
 	const columns: TableColumn<CoinOnWatchlist | CoinData>[] = [
 		{
 			id: 'add-to-watchlist',
 			header: '',
-			cell: ({ row }) => {
-				if ('isOnWatchlist' in row.original) {
-					return (
-						<AddToWatchlist
-							coinId={row.original.id}
-							watchlistCallback={fetchWatchlist}
-							isOnWatchlist={row.original.isOnWatchlist}
-						/>
-					);
-				} else {
-					return (
-						<AddToWatchlist
-							coinId={row.original.id}
-							watchlistCallback={fetchWatchlist}
-						/>
-					);
-				}
-			},
+			cell: ({ row }) => (
+				<WatchlistButton
+					coinId={row.original.id}
+					isOnWatchlist={
+						'isOnWatchlist' in row.original ? row.original.isOnWatchlist : false
+					}
+					watchlistCallback={refetch}
+				/>
+			),
+
 			size: 'auto' as unknown as number,
 		},
 		{

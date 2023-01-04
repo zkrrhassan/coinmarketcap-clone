@@ -20,6 +20,6 @@ const get: NextApiHandler = async (
 		return res.status(404).send({ error: `Couldn't find watchlist` });
 	}
 
-	res.json(watchlist);
+	res.status(200).json(watchlist);
 };
 export default get;
