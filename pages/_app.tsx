@@ -14,6 +14,9 @@ import { SessionProvider } from 'next-auth/react';
 import { ComponentType, ReactElement } from 'react';
 import { NextPage } from 'next/types';
 import ThemeProvider from 'src/theme/ThemeProvider';
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
 	NestedLayout?: ComponentType<{ children: ReactElement }>;
@@ -25,22 +28,24 @@ type AppPropsWithLayout = AppProps & {
 
 function MyApp({ Component, pageProps }: AppPropsWithLayout) {
 	return (
-		<SessionProvider session={pageProps.session}>
-			<Provider store={store}>
-				<ThemeProvider>
-					<GlobalStyles />
-					<Layout>
-						{Component.NestedLayout ? (
-							<Component.NestedLayout>
+		<QueryClientProvider client={queryClient}>
+			<SessionProvider session={pageProps.session}>
+				<Provider store={store}>
+					<ThemeProvider>
+						<GlobalStyles />
+						<Layout>
+							{Component.NestedLayout ? (
+								<Component.NestedLayout>
+									<Component {...pageProps} />
+								</Component.NestedLayout>
+							) : (
 								<Component {...pageProps} />
-							</Component.NestedLayout>
-						) : (
-							<Component {...pageProps} />
-						)}
-					</Layout>
-				</ThemeProvider>
-			</Provider>
-		</SessionProvider>
+							)}
+						</Layout>
+					</ThemeProvider>
+				</Provider>
+			</SessionProvider>
+		</QueryClientProvider>
 	);
 }
 
