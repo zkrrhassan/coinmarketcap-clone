@@ -3,6 +3,7 @@ import NFTInfo, { NFTInfoProps } from 'components/pages/nft/NFTInfo/NFTInfo';
 import NFTMarketData, {
 	NFTMarketDataProps,
 } from 'components/pages/nft/NFTMarketData/NFTMarketData';
+import SEO from 'components/SEO/SEO';
 import { GetServerSideProps } from 'next';
 import React from 'react';
 import { Container } from 'styled/elements/Container';
@@ -23,10 +24,13 @@ interface NFTProps {
 
 const NFT = ({ data }: NFTProps) => {
 	return (
-		<Container style={{ paddingBlock: '50px' }}>
-			<NFTInfo {...data} />
-			<NFTMarketData {...data} />
-		</Container>
+		<>
+			<SEO />
+			<Container style={{ paddingBlock: '50px' }}>
+				<NFTInfo {...data} />
+				<NFTMarketData {...data} />
+			</Container>
+		</>
 	);
 };
 

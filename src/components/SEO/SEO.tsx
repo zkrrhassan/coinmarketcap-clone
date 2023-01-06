@@ -1,7 +1,7 @@
 import Head from 'next/head';
 
 const DOMAIN = 'https://cmcv2.com';
-const DEFAULT_OG_IMAGE = '/static/ogImage';
+const DEFAULT_OG_IMAGE = '/static/ogImage.png';
 
 interface SEOProps {
 	title?: string;
@@ -37,11 +37,7 @@ const SEO = ({
 			<meta key="og_site_name" property="og:site_name" content={siteName} />
 			<meta key="og_url" property="og:url" content={canonical ?? DOMAIN} />
 			<meta key="og_site_name" property="og:site_name" content={siteName} />
-			<meta
-				key="og_image"
-				property="og:image"
-				content={ogImage ?? DEFAULT_OG_IMAGE}
-			/>
+			<meta key="og_image" property="og:image" content={ogImage} />
 			<meta
 				key="og_image:alt"
 				property="og:image:alt"

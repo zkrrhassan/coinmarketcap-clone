@@ -6,6 +6,8 @@ import React from 'react';
 import { NextPage } from 'next/types';
 import { ExchangeInfoProps } from 'components/pages/exchanges/ExchangeInfo/ExchangeInfo';
 import { ColumnDef } from '@tanstack/react-table';
+import SEO from 'components/SEO/SEO';
+import { capitalize } from 'lodash';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
 	const res = await axios.get(
@@ -15,6 +17,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query }) => {
 	return {
 		props: {
 			data: res.data,
+			exchange: query.slug,
 		},
 	};
 };
@@ -30,9 +33,10 @@ interface ExchangeProps {
 	data: ExchangeInfoProps & {
 		tickers: ExchangeTicker[];
 	};
+	exchange: string;
 }
 
-const Exchange: NextPage<ExchangeProps> = ({ data }) => {
+const Exchange: NextPage<ExchangeProps> = ({ data, exchange }) => {
 	const columns: TableColumn<ExchangeTicker>[] = [
 		{
 			header: '#',
@@ -75,6 +79,12 @@ const Exchange: NextPage<ExchangeProps> = ({ data }) => {
 
 	return (
 		<>
+			<SEO
+				title={`${capitalize(
+					exchange
+				)} trade volume and market listings | CoinMarketCap`}
+				description={`${capitalize(exchange)} trade volume and market listings`}
+			/>
 			<ExchangeInfo {...data} />
 			<Table columns={columns} data={data.tickers} />
 		</>

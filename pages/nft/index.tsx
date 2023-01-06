@@ -1,5 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import axios from 'axios';
+import SEO from 'components/SEO/SEO';
 import Table, { TableColumn } from 'components/Table/Table';
 import type { GetServerSideProps, NextPage } from 'next';
 import Link from 'next/link';
@@ -51,6 +52,7 @@ const Nft: NextPage<NftProps> = ({ nfts }) => {
 	];
 	return (
 		<>
+			<SEO />
 			<Table columns={columns} data={nfts} />
 		</>
 	);

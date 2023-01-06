@@ -1,5 +1,6 @@
 import axios from 'axios';
 import SectionHeader from 'components/SectionHeader/SectionHeader';
+import SEO from 'components/SEO/SEO';
 import Table, { TableColumn } from 'components/Table/Table';
 import type { GetServerSideProps, NextPage } from 'next';
 import Image from 'next/image';
@@ -118,6 +119,10 @@ const Derivatives: NextPage<{ derivatives: Derivative[]; page: number }> = ({
 
 	return (
 		<>
+			<SEO
+				title="Top Cryptocurrency Derivatives Exchanges Ranked | CoinMarketCap"
+				description="See our list of cryptocurrency derivatives exchanges ✔️ Ranked by volume ✔️ Binance ✔️ Bybit ✔️ Bitmex ✔️ Kraken ✔️ And many more ✔️"
+			/>
 			<SectionHeader
 				title="Top Cryptocurrency Derivatives Exchanges"
 				description="CoinMarketCap ranks the top cryptocurrency derivatives exchanges using an algorithm based on multiple factors including liquidity and normalized volume."
