@@ -26,6 +26,7 @@ import {
 	StatusWrapper,
 } from './CreatePostForm.styled';
 import { useTheme } from 'styled-components';
+import { useMutation } from '@tanstack/react-query';
 
 interface Inputs {
 	status: 'bullish' | 'bearish' | null;
@@ -46,10 +47,26 @@ const CreatePostForm = ({ comment, postId }: PostFormProps) => {
 		resolver: zodResolver(schema),
 	});
 	const status = watch('status');
-	const { data } = useSession();
+	const { data: session } = useSession();
+	const userId = session?.user.id;
 	const {
 		colors: { white, upColor, downColor },
 	} = useTheme();
+	const create = useMutation({
+		mutationFn: async (inputs: Inputs) => {
+			const ednpoint = comment ? '/api/comment/create' : '/api/post/create';
+			const params = comment ? { postId, userId } : { userId };
+			return await axios.post(
+				ednpoint,
+				{
+					...inputs,
+				},
+				{
+					params,
+				}
+			);
+		},
+	});
 
 	const unselectRadioInput = (
 		e: MouseEvent<HTMLInputElement, globalThis.MouseEvent>
@@ -61,29 +78,7 @@ const CreatePostForm = ({ comment, postId }: PostFormProps) => {
 	};
 
 	const onSubmit = async (inputs: Inputs) => {
-		const { status, content } = inputs;
-
-		const ednpoint = comment ? '/api/comment/create' : '/api/post/create';
-		const params = comment
-			? { postId, userId: data?.user.id }
-			: { userId: data?.user.id };
-
-		const createPostOrComment = axios.post(
-			ednpoint,
-			{
-				content,
-				status,
-			},
-			{
-				params,
-			}
-		);
-
-		toast.promise(createPostOrComment, {
-			loading: '',
-			success: 'Post created downColor',
-			error: "Couldn't create your post",
-		});
+		create.mutate(inputs);
 	};
 
 	return (
@@ -94,7 +89,7 @@ const CreatePostForm = ({ comment, postId }: PostFormProps) => {
 					width={56}
 					height={56}
 					firstLetter="Guest"
-					source={data?.user.image && `/uploads/${data.user.image}.jpeg`}
+					source={session?.user.image && `/uploads/${session.user.image}.jpeg`}
 				/>
 			</ImageWrapper>
 			<PostFormWrapper>

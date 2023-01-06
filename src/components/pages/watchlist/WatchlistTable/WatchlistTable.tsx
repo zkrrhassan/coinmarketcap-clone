@@ -6,7 +6,7 @@ import PercentageChange from 'components/PercentageChange/PercentageChange';
 import Image from 'next/image';
 import Link from 'next/link';
 import { startsWithHttp } from 'utils/formatLink';
-import AddToWatchlist from 'components/AddToWatchlist/AddToWatchlist';
+import WatchlistButton from 'components/WatchlistButton/WatchlistButton';
 import {
 	LinkWrapper,
 	NameWrapper,
@@ -17,7 +17,7 @@ import {
 
 interface WatchlistTableProps {
 	coins: CoinData[];
-	watchlistCallback: () => Promise<void>;
+	watchlistCallback: () => void;
 }
 
 const WatchlistTable = ({ coins, watchlistCallback }: WatchlistTableProps) => {
@@ -25,7 +25,7 @@ const WatchlistTable = ({ coins, watchlistCallback }: WatchlistTableProps) => {
 		{
 			id: 'add-to-watchlist',
 			cell: ({ row }) => (
-				<AddToWatchlist
+				<WatchlistButton
 					coinId={row.original.id}
 					watchlistCallback={watchlistCallback}
 					isOnWatchlist={true}

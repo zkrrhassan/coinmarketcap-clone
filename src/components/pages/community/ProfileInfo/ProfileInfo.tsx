@@ -1,11 +1,12 @@
 import { faPenToSquare } from '@fortawesome/free-regular-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { User } from '@prisma/client';
+import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import ProfileImage from 'components/ProfileImage/ProfileImage';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { formatToShortDate } from 'utils/formatDate';
 import {
 	EditButton,
@@ -28,40 +29,23 @@ const ProfileInfo = () => {
 	const {
 		query: { name },
 	} = useRouter();
-	const [user, setUser] = useState<User | null>(null);
-	const [error, setError] = useState<string>('');
-	const [loading, setLoading] = useState(false);
 
-	useEffect(() => {
-		const fetchUser = async () => {
-			if (name) {
-				try {
-					setLoading(true);
-					const res = await axios.get(`/api/user/get`, {
-						params: {
-							name,
-						},
-					});
-					setUser(res.data);
-				} catch (error) {
-					console.error(error);
-					setError('User not found');
-				} finally {
-					setLoading(false);
-				}
-			}
-		};
-
-		fetchUser();
-	}, [name]);
-
-	if (error) {
-		return <div>{error}</div>;
-	}
+	const { data: user, isLoading } = useQuery({
+		queryKey: ['userProfile', name],
+		queryFn: async () =>
+			(
+				await axios.get<User>(`/api/user/get`, {
+					params: {
+						name,
+					},
+				})
+			).data,
+		enabled: !!name,
+	});
 
 	return (
 		<>
-			{loading && <div>Loading...</div>}
+			{isLoading && <div>Loading...</div>}
 			{user && (
 				<ProfileWrapper>
 					<ProfileData>
@@ -76,7 +60,7 @@ const ProfileInfo = () => {
 						</ImageWrapper>
 						<ProfileContent>
 							<ProfileNameWrapper>
-								<ProfileDisplayName>{user?.name}</ProfileDisplayName>
+								<ProfileDisplayName>{user.name}</ProfileDisplayName>
 								<ProfileName>@displayName</ProfileName>
 								<ProfileStatisticWrapper>
 									<ProfileStatistic>

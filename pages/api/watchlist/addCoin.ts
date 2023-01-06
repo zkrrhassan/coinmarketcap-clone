@@ -1,16 +1,21 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from 'prisma/prisma';
+import { Watchlist } from 'prisma/prisma-client';
 
-const addCoin: NextApiHandler = async (
+export type AddCoinParams = { userId: string };
+export type GetSignoutLinkRequest = { authenticationType: string };
+
+const addCoin: NextApiHandler<Watchlist> = async (
 	req: NextApiRequest,
 	res: NextApiResponse
 ) => {
+	const { userId } = req.query as AddCoinParams;
 	const { coinId } = req.body;
-	const { watchlistId } = req.query;
 
 	const watchlist = await prisma.watchlist.findFirst({
 		where: {
-			id: watchlistId as string,
+			userId,
+			isMain: true,
 		},
 	});
 
@@ -18,7 +23,7 @@ const addCoin: NextApiHandler = async (
 		return res.status(404).send({ error: `Couldn't find watchlist` });
 	}
 
-	await prisma.watchlist.update({
+	const updatedWatchlist = await prisma.watchlist.update({
 		where: {
 			id: watchlist.id,
 		},
@@ -29,6 +34,6 @@ const addCoin: NextApiHandler = async (
 		},
 	});
 
-	res.status(200).json(watchlist);
+	res.status(200).json(updatedWatchlist);
 };
 export default addCoin;

@@ -1,20 +1,16 @@
+import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Post from '../Post/Post';
 import { PostWithAuthor } from '../ProfilePosts/ProfilePosts';
 import { Search, SearchButton, SearchContainer } from './FeedPosts.styled';
 
 const Posts = () => {
-	const [posts, setPosts] = useState<PostWithAuthor[]>([]);
-
-	useEffect(() => {
-		const fetchPosts = async () => {
-			const data = await (await axios.get('/api/post/getAll')).data;
-
-			setPosts(data);
-		};
-		fetchPosts();
-	}, []);
+	const { data: posts } = useQuery({
+		queryKey: ['posts'],
+		queryFn: async () =>
+			(await axios.get<PostWithAuthor[]>('/api/post/getAll')).data,
+	});
 
 	return (
 		<div>
@@ -23,18 +19,20 @@ const Posts = () => {
 				<SearchButton>Search</SearchButton>
 			</SearchContainer>
 			<div></div>
-			<div>
-				{posts.map((post) => (
-					<Post
-						key={post.id}
-						image={post.author.image}
-						name={post.author.name}
-						displayName={post.author.name}
-						{...post}
-						marginInline
-					/>
-				))}
-			</div>
+			{posts && (
+				<div>
+					{posts.map((post) => (
+						<Post
+							key={post.id}
+							image={post.author.image}
+							name={post.author.name}
+							displayName={post.author.name}
+							{...post}
+							marginInline
+						/>
+					))}
+				</div>
+			)}
 		</div>
 	);
 };

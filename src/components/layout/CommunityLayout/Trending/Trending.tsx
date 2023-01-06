@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import {
 	TrendingWrapper,
@@ -10,6 +10,7 @@ import {
 	CoinNumber,
 	CoinName,
 } from './Trending.styled';
+import { useQuery } from '@tanstack/react-query';
 
 interface TrendingCoin {
 	item: {
@@ -25,42 +26,37 @@ interface TrendingCoin {
 }
 
 const Trending = () => {
-	const [trendingCoins, setTrendingCoins] = useState<TrendingCoin[]>([]);
-
-	const fetchTrendingCoins = async () => {
-		try {
-			const res = await axios.get(
-				`${process.env.NEXT_PUBLIC_CMC_API_URI}/search/trending`
-			);
-			setTrendingCoins(res.data.coins);
-		} catch (error) {
-			console.error(error);
-		}
-	};
-
-	useEffect(() => {
-		fetchTrendingCoins();
-	}, []);
+	const { data: trending, refetch } = useQuery({
+		queryKey: ['trending'],
+		queryFn: async () =>
+			(
+				await axios.get<{ coins: TrendingCoin[] }>(
+					`${process.env.NEXT_PUBLIC_CMC_API_URI}/search/trending`
+				)
+			).data.coins,
+	});
 
 	return (
 		<TrendingWrapper>
 			<TrendingHeader>
 				<p>🔥 Trending</p>
-				<RefreshButton onClick={fetchTrendingCoins}>Refresh</RefreshButton>
+				<RefreshButton onClick={() => refetch()}>Refresh</RefreshButton>
 			</TrendingHeader>
-			<ul>
-				{trendingCoins.map(({ item }, index) => (
-					<ItemWrapper key={item.id}>
-						<Link href="">
-							<CoinInfo>
-								<CoinNumber>{index + 1}</CoinNumber>
-								<CoinName>{item.name}</CoinName>
-								<CoinNumber>{item.market_cap_rank}</CoinNumber>
-							</CoinInfo>
-						</Link>
-					</ItemWrapper>
-				))}
-			</ul>
+			{trending && (
+				<ul>
+					{trending.map(({ item }, index) => (
+						<ItemWrapper key={item.id}>
+							<Link href="">
+								<CoinInfo>
+									<CoinNumber>{index + 1}</CoinNumber>
+									<CoinName>{item.name}</CoinName>
+									<CoinNumber>{item.market_cap_rank}</CoinNumber>
+								</CoinInfo>
+							</Link>
+						</ItemWrapper>
+					))}
+				</ul>
+			)}
 		</TrendingWrapper>
 	);
 };
