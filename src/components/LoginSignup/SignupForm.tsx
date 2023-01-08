@@ -57,7 +57,7 @@ const SignupForm = ({ closeFormCallback }: AuthFormProps) => {
 			reset();
 			toast('User registered successfully');
 		} catch (error) {
-			console.error('errorr!!!', error);
+			console.error('error!!!', error);
 			toast('Error occured during registration');
 		}
 		setLoading(false);

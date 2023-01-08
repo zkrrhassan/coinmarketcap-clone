@@ -33,7 +33,7 @@ export default NextAuth({
 				if (!credentials) return null;
 				const { email, password } = credentials;
 				try {
-					const user = await (
+					const user = (
 						await axios.post('http://localhost:3000/api/user/get', {
 							email,
 							password,
