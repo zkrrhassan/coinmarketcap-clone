@@ -5,6 +5,8 @@ import LinksSectionMobile from 'components/pages/coin/LinksSectionMobile/LinksSe
 import CoinData from 'components/pages/coin/CoinData/CoinData';
 import ChartSection from 'components/pages/coin/ChartSection/ChartSection';
 import { Time } from 'lightweight-charts';
+import SEO from 'components/SEO/SEO';
+import { capitalize } from 'lodash';
 
 export interface CoinLinks {
 	homepage: string[];
@@ -96,13 +98,23 @@ const Coin = ({ info, historical }: CoinProps) => {
 	}));
 
 	return (
-		info && (
-			<>
-				<CoinData info={info} />
-				<LinksSectionMobile links={info.links} name={info.name} />
-				<ChartSection data={initialData} name={info.name} />
-			</>
-		)
+		<>
+			<SEO
+				title={`${capitalize(
+					info.name
+				)} price today, BTC to USD live, marketcap and chart | CoinMarketCap`}
+				description={`Get the latest ${capitalize(
+					info.name
+				)} price, BTC market cap, trading pairs, charts and data today from the world’s number one cryptocurrency price-tracking website`}
+			/>
+			{info && (
+				<>
+					<CoinData info={info} />
+					<LinksSectionMobile links={info.links} name={info.name} />
+					<ChartSection data={initialData} name={info.name} />
+				</>
+			)}
+		</>
 	);
 };
 

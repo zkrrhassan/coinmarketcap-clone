@@ -32,12 +32,12 @@ import {
 	SaveButton,
 } from './WatchlistList.styled';
 import { useTheme } from 'styled-components';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface WatchlistListProps {
 	currentWatchlist: Watchlist;
 	watchlists: Watchlist[];
-	changeWatchlistCallback: (name: string) => Promise<void>;
-	getWatchlists: () => Promise<void>;
+	changeWatchlistCallback: (name: string) => void;
 }
 
 interface Inputs {
@@ -49,7 +49,6 @@ const WatchlistList = ({
 	currentWatchlist,
 	watchlists,
 	changeWatchlistCallback,
-	getWatchlists,
 }: WatchlistListProps) => {
 	const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
 	const nameWrapperRef = useRef<HTMLDivElement>(null);
@@ -66,18 +65,16 @@ const WatchlistList = ({
 		mode: 'onSubmit',
 		reValidateMode: 'onSubmit',
 	});
-	const { data } = useSession();
+	const { data: session } = useSession();
 	const [watchlistAction, setWatchlistAction] = useState<
 		'edit' | 'create' | null
 	>(null);
 	const {
 		colors: { textColor },
 	} = useTheme();
-
-	const onSubmit = async (inputs: Inputs) => {
-		const { name, description } = inputs;
-
-		if (watchlistAction === 'create') {
+	const queryClient = useQueryClient();
+	const createWatchlist = useMutation({
+		mutationFn: async (name: string) => {
 			await axios.post(
 				'api/watchlist/create',
 				{
@@ -85,12 +82,15 @@ const WatchlistList = ({
 				},
 				{
 					params: {
-						userId: data?.user.id,
+						userId: session?.user.id,
 					},
 				}
 			);
-		}
-		if (watchlistAction === 'edit') {
+		},
+		onSuccess: () => queryClient.invalidateQueries(['watchlists']),
+	});
+	const updateWatchlist = useMutation({
+		mutationFn: async (name: string) => {
 			await axios.patch(
 				'/api/watchlist/update',
 				{
@@ -102,9 +102,20 @@ const WatchlistList = ({
 					},
 				}
 			);
+		},
+		onSuccess: () => queryClient.invalidateQueries(['watchlists']),
+	});
+
+	const onSubmit = async (inputs: Inputs) => {
+		const { name, description } = inputs;
+
+		if (watchlistAction === 'create') {
+			createWatchlist.mutate(name);
+		}
+		if (watchlistAction === 'edit') {
+			updateWatchlist.mutate(name);
 		}
 
-		await getWatchlists();
 		setModalOpen(false);
 		setWatchlistAction(null);
 	};

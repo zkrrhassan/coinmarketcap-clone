@@ -6,11 +6,12 @@ const removeCoin: NextApiHandler = async (
 	res: NextApiResponse
 ) => {
 	const { coinId } = req.body;
-	const { watchlistId } = req.query;
+	const { userId } = req.query;
 
 	const watchlist = await prisma.watchlist.findFirst({
 		where: {
-			id: watchlistId as string,
+			userId: userId as string,
+			isMain: true,
 		},
 	});
 

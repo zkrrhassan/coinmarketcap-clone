@@ -1,13 +1,14 @@
 import axios from 'axios';
 import HomeTable from 'components/pages/home/HomeTable/HomeTable';
 import Pagination from 'components/Pagination/Pagination';
+import SEO from 'components/SEO/SEO';
+import { capitalize } from 'lodash';
 import type { GetServerSideProps, NextPage } from 'next';
 import { CoinData } from 'pages';
 
 interface CategoriesProps {
 	coins: CoinData[];
 	category: string;
-	totalCoins: number;
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
@@ -34,6 +35,14 @@ export const getServerSideProps: GetServerSideProps = async ({ query }) => {
 const Categories: NextPage<CategoriesProps> = ({ coins, category }) => {
 	return (
 		<>
+			<SEO
+				title={`Top ${capitalize(
+					category
+				)} Tokens by Market Capitalization | CoinMarketCap`}
+				description={`See today's latest prices of ${capitalize(
+					category
+				)} crypto tokens listed by market capitalization ✔️ 24h volume ✔️ 24h price change ✔️`}
+			/>
 			<HomeTable initialCoins={coins} />
 			<Pagination
 				totalItems={4400}

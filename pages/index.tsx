@@ -4,6 +4,7 @@ import SectionHeader from 'components/SectionHeader/SectionHeader';
 import axios from 'axios';
 import { GetServerSideProps } from 'next';
 import HomeTable from 'components/pages/home/HomeTable/HomeTable';
+import SEO from 'components/SEO/SEO';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
 	const coins = await axios.get(`${process.env.CMC_API_URI}/coins/markets`, {
@@ -51,6 +52,7 @@ const Home: NextPage<{ initialCoins: CoinData[]; totalCoins: number }> = ({
 }) => {
 	return (
 		<>
+			<SEO />
 			<SectionHeader
 				title="Today's Cryptocurrency Prices by Market"
 				description="Lorem ipsum dolor sit amet, consectetur adipisicing elit. Optio officia laboriosam ad, rerum iste eaque facilis tempora nam maiores nihil?"

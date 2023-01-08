@@ -1,6 +1,7 @@
 import axios from 'axios';
 import ExchangesTable from 'components/pages/exchanges/ExchangesTable/ExchangesTable';
 import SectionHeader from 'components/SectionHeader/SectionHeader';
+import SEO from 'components/SEO/SEO';
 import type { GetServerSideProps, NextPage } from 'next';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
@@ -34,6 +35,10 @@ export interface Exchange {
 const Exchanges: NextPage<{ exchanges: Exchange[] }> = ({ exchanges }) => {
 	return (
 		<>
+			<SEO
+				title="Top Cryptocurrency Exchanges Ranked By Volume | CoinMarketCap"
+				description="See our list of cryptocurrency exchanges ✔️ Ranked by volume ✔️ Binance ✔️ Coinbase Pro ✔️ Huobi ✔️ Kraken ✔️ Bithumb ✔️ Bitfinex ✔️ And many more ✔️"
+			/>
 			<SectionHeader
 				title="Top Cryptocurrency Spot Exchanges"
 				description="CoinMarketCap ranks and scores exchanges based on traffic, liquidity, trading volumes, and confidence in the legitimacy of trading volumes reported."

@@ -10,6 +10,7 @@ import {
 	NoMoreContent,
 	PostsContainer,
 } from './ProfilePosts.styled';
+import { useQuery } from '@tanstack/react-query';
 
 type Activity = 'posts' | 'comments' | 'likes';
 
@@ -24,73 +25,45 @@ type CommentWithPost = Comment & {
 
 const ProfilePosts = () => {
 	const [activity, setActivity] = useState<Activity>('posts');
-	const [posts, setPosts] = useState<PostWithAuthor[]>([]);
-	const [comments, setComments] = useState<CommentWithPost[]>([]);
-	const [likes, setLikes] = useState<PostWithAuthor[]>([]);
-	const { data } = useSession();
-
-	useEffect(() => {
-		fetchPosts();
-	}, []);
-
-	useEffect(() => {
-		fetchActivity();
-	}, [activity]);
+	const { data: session } = useSession();
+	const id = session?.user.id;
+	const { data: posts, refetch } = useQuery<
+		PostWithAuthor[] | CommentWithPost[]
+	>({
+		queryKey: ['userPosts', id, activity],
+		queryFn: async () => {
+			if (activity === 'comments') {
+				return (
+					await axios.get<CommentWithPost[]>('/api/comment/getAll', {
+						params: {
+							userId: id,
+						},
+					})
+				).data;
+			}
+			if (activity === 'likes') {
+				return (
+					await axios.get<PostWithAuthor[]>('/api/post/getLiked', {
+						params: {
+							userId: id,
+						},
+					})
+				).data;
+			}
+			return (
+				await axios.get<PostWithAuthor[]>('/api/post/getAll', {
+					params: {
+						userId: id,
+					},
+				})
+			).data;
+		},
+		enabled: !!id,
+	});
 
 	const changeActivity = (e: MouseEvent) => {
 		const target = e.target as HTMLDivElement;
 		setActivity(target.innerText.toLowerCase() as Activity);
-	};
-
-	const fetchPosts = async () => {
-		const posts = await (
-			await axios.get('/api/post/getAll', {
-				params: {
-					userId: data?.user.id,
-				},
-			})
-		).data;
-		setPosts(posts);
-	};
-
-	const fetchComments = async () => {
-		if (!data) return;
-
-		const comments = (
-			await axios.get('/api/comment/getAll', {
-				params: {
-					userId: data.user.id,
-				},
-			})
-		).data;
-
-		setComments(comments);
-	};
-
-	const fetchLikes = async () => {
-		if (!data) return;
-
-		const likes = (
-			await axios.get('/api/post/getLiked', {
-				params: {
-					userId: data.user.id,
-				},
-			})
-		).data;
-
-		setLikes(likes);
-	};
-
-	const fetchActivity = () => {
-		if (activity === 'posts') {
-			fetchPosts();
-		}
-		if (activity === 'comments') {
-			fetchComments();
-		}
-		if (activity === 'likes') {
-			fetchLikes();
-		}
 	};
 
 	return (
@@ -118,7 +91,7 @@ const ProfilePosts = () => {
 				</ActivitiesWrapper>
 			</div>
 			<PostsContainer>
-				{activity === 'posts' && (
+				{activity === 'posts' && posts && (
 					<>
 						{posts.map((post) => (
 							<Link key={post.id} href={`/community/post/${post.id}`}>
@@ -135,9 +108,9 @@ const ProfilePosts = () => {
 						))}
 					</>
 				)}
-				{activity === 'comments' && (
+				{activity === 'comments' && posts && (
 					<>
-						{comments.map(
+						{(posts as CommentWithPost[]).map(
 							({
 								id,
 								createdAt,
@@ -178,15 +151,16 @@ const ProfilePosts = () => {
 						)}
 					</>
 				)}
-				{activity === 'likes' && (
+				{activity === 'likes' && posts && (
 					<>
-						{likes.map((like) => (
+						{posts.map((like) => (
 							<Post
 								key={like.id}
 								{...like}
 								image={like.author.image}
 								name={like.author.name}
 								displayName={like.author.name}
+								refetchCallback={refetch}
 							/>
 						))}
 					</>

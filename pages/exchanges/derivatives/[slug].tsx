@@ -9,6 +9,8 @@ import { NextPage } from 'next/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { formatLargeValue, formatPrice } from 'utils/formatValues';
 import PercentageChange from 'components/PercentageChange/PercentageChange';
+import SEO from 'components/SEO/SEO';
+import { capitalize } from 'lodash';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
 	const res = await axios.get(
@@ -23,6 +25,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query }) => {
 	return {
 		props: {
 			data: res.data,
+			derivative: query.slug,
 		},
 	};
 };
@@ -42,9 +45,10 @@ interface DerivativeProps {
 	data: ExchangeInfoProps & {
 		tickers: DerivativeTicker[];
 	};
+	derivative: string;
 }
 
-const Derivative: NextPage<DerivativeProps> = ({ data }) => {
+const Derivative: NextPage<DerivativeProps> = ({ data, derivative }) => {
 	const columns: TableColumn<DerivativeTicker>[] = [
 		{
 			id: 'rank',
@@ -108,6 +112,14 @@ const Derivative: NextPage<DerivativeProps> = ({ data }) => {
 
 	return (
 		<>
+			<SEO
+				title={`${capitalize(
+					derivative
+				)} trade volume and market listings | CoinMarketCap`}
+				description={`${capitalize(
+					derivative
+				)} trade volume and market listings`}
+			/>
 			<ExchangeInfo {...data} />
 			<Table columns={columns} data={data.tickers} />
 		</>
