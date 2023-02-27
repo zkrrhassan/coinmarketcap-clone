@@ -27,14 +27,14 @@ const HomeTable = ({ initialCoins }: HomeTableProps) => {
 	const [coins, setCoins] =
 		useState<(CoinOnWatchlist | CoinData)[]>(initialCoins);
 	const { data: session, status } = useSession();
-	const id = session?.user.id;
-	const { refetch } = useQuery({
+	const userId = session?.user.id;
+	const { data: watchlistCoins, refetch } = useQuery({
 		queryKey: ['watchlistCoins', status],
 		queryFn: async () => {
 			const data = (
 				await axios.get<Watchlist>('/api/watchlist/get', {
 					params: {
-						userId: id,
+						userId,
 						isMain: true,
 					},
 				})
@@ -43,19 +43,19 @@ const HomeTable = ({ initialCoins }: HomeTableProps) => {
 			setCoins(processCoinsData(data));
 			return data;
 		},
-		enabled: !!id,
+		enabled: !!userId,
 		refetchOnWindowFocus: false,
 	});
 	const {
 		colors: { upColor, downColor },
 	} = useTheme();
 
-	const processCoinsData = (coins?: Watchlist['coinIds']) => {
-		if (!coins) return initialCoins;
+	const processCoinsData = (onWatchlist?: Watchlist['coinIds']) => {
+		if (!onWatchlist) return initialCoins;
 		return initialCoins.map((coin) => {
 			return {
 				...coin,
-				isOnWatchlist: coins.includes(coin.id) ?? false,
+				isOnWatchlist: onWatchlist.includes(coin.id) ?? false,
 			};
 		});
 	};
