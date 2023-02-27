@@ -8,6 +8,7 @@ export const SidebarRightWrapper = styled.div`
 	position: sticky;
 	top: 0px;
 	align-self: flex-start;
+	margin-left: 24px;
 
 	@media screen and (max-width: 992px) {
 		display: none;
