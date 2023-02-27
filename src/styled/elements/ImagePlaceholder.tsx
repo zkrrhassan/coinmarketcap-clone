@@ -26,12 +26,7 @@ const ImagePlaceholder = styled.div<{ variant: ImagePlaceholderVariant }>`
 		css`
 			width: 32px;
 			height: 32px;
-			border: 2px solid ${({ theme: { colors } }) => colors.borderColor};
 			cursor: pointer;
-			transition: border-color 100ms ease-out;
-			&:hover {
-				border-color: ${({ theme: { colors } }) => colors.themeColor};
-			}
 		`}
 `;
 

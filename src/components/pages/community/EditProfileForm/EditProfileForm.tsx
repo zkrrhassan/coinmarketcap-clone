@@ -4,7 +4,6 @@ import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import { User } from '@prisma/client';
 import axios from 'axios';
 import CropImage from '../CropImage/CropImage';
 import ProfileImage from 'components/ProfileImage/ProfileImage';
@@ -60,7 +59,6 @@ const EditProfileForm = () => {
 	});
 	const saveChanges = useMutation({
 		mutationFn: async (userData: EditUserInputs) => {
-			console.log(userData);
 			await axios.post(
 				'/api/user/update',
 				{
@@ -79,7 +77,6 @@ const EditProfileForm = () => {
 		onChange: async (e: ChangeEvent<HTMLInputElement>) => {
 			if (!e.target.files) return;
 			try {
-				// const imageURL = await convertToBase64(e.target.files[0]);
 				const imageURL = URL.createObjectURL(e.target.files[0]);
 				setImageToCrop(imageURL);
 				setCropperOpen(true);
@@ -168,9 +165,7 @@ const EditProfileForm = () => {
 				<AvatarWrapper>
 					{session && (
 						<ProfileImage
-							source={
-								session.user.image && `/uploads/${session.user.image}.jpeg`
-							}
+							source={`/uploads/${user.image}.jpeg`}
 							firstLetter={session.user.name.charAt(0)}
 							width={64}
 							height={64}

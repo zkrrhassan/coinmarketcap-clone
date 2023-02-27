@@ -21,7 +21,7 @@ import {
 
 const UserDropdown = () => {
 	const dispatch = useAppDispatch();
-	const { data, status } = useSession();
+	const { data: session } = useSession();
 
 	const openSignUp = () => {
 		dispatch(changeAuthOpen('signup'));
@@ -36,22 +36,30 @@ const UserDropdown = () => {
 		});
 	};
 
-	return (
-		<UserDropdownWrapper>
-			{status === 'unauthenticated' && (
+	if (!session)
+		return (
+			<UserDropdownWrapper>
 				<ButtonsWrapper>
 					<Button outlined onClick={openLogIn}>
 						Log in
 					</Button>
 					<Button onClick={openSignUp}>Sign up</Button>
 				</ButtonsWrapper>
-			)}
-			{status === 'authenticated' && data && (
+			</UserDropdownWrapper>
+		);
+
+	const {
+		user: { image, name, email },
+	} = session;
+
+	return (
+		<UserDropdownWrapper>
+			{session && (
 				<UserMenuWrapper>
 					<ImageWrapper>
 						<ProfileImage
-							source={data.user.image && `/uploads/${data.user.image}.jpeg`}
-							firstLetter={data.user.name.charAt(0)}
+							source={image && `/uploads/${image}.jpeg`}
+							firstLetter={name.charAt(0)}
 							width={28}
 							height={28}
 							variant="small"
@@ -59,21 +67,19 @@ const UserDropdown = () => {
 					</ImageWrapper>
 					<UserMenuDropdown>
 						<UserMenu>
-							<Link href={`/community/profile/${data.user.name}`}>
+							<Link href={`/community/profile/${name}`}>
 								<a>
 									<UserPreview>
 										<ProfileImage
-											source={
-												data.user.image && `/uploads/${data.user.image}.jpeg`
-											}
-											firstLetter={data.user.name.charAt(0)}
+											source={image && `/uploads/${image}.jpeg`}
+											firstLetter={name.charAt(0)}
 											width={64}
 											height={64}
 											variant="medium"
 										/>
 										<div>
-											<UserName>Hi, {data.user?.name}</UserName>
-											<UserEmail>{data.user?.email}</UserEmail>
+											<UserName>Hi, {name}</UserName>
+											<UserEmail>{email}</UserEmail>
 										</div>
 									</UserPreview>
 								</a>
@@ -84,7 +90,7 @@ const UserDropdown = () => {
 										<UserMenuItem>Watchlist</UserMenuItem>
 									</a>
 								</Link>
-								<Link href={`/community/profile/${data.user.name}`}>
+								<Link href={`/community/profile/${name}`}>
 									<a>
 										<UserMenuItem>My Profile</UserMenuItem>
 									</a>
