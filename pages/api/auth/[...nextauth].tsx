@@ -2,6 +2,7 @@ import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcrypt';
 import axios from 'axios';
+import { User } from 'prisma/prisma-client';
 
 const confirmPasswordHash = (plainPassword: string, hashedPassword: string) => {
 	return new Promise<boolean>((resolve) => {
@@ -34,7 +35,7 @@ export default NextAuth({
 				const { email, password } = credentials;
 				try {
 					const user = (
-						await axios.post(`${process.env.NEXTAUTH_URL}/api/user/get`, {
+						await axios.post<User>(`${process.env.NEXTAUTH_URL}/api/user/get`, {
 							email,
 							password,
 						})
