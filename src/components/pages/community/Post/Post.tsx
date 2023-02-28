@@ -126,7 +126,7 @@ const Post = ({
 		>
 			<ImageWrapper>
 				<ProfileImage
-					source={image && `/uploads/${image}.jpeg`}
+					source={image}
 					firstLetter={nameFirstLetter}
 					width={56}
 					height={56}
