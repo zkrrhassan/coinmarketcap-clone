@@ -26,7 +26,11 @@ interface TrendingCoin {
 }
 
 const Trending = () => {
-	const { data: trending, refetch } = useQuery({
+	const {
+		data: trending,
+		refetch,
+		isLoading,
+	} = useQuery({
 		queryKey: ['trending'],
 		queryFn: async () =>
 			(
@@ -42,6 +46,7 @@ const Trending = () => {
 				<p>🔥 Trending</p>
 				<RefreshButton onClick={() => refetch()}>Refresh</RefreshButton>
 			</TrendingHeader>
+			{isLoading && <div>Loading</div>}
 			{trending && (
 				<ul>
 					{trending.map(({ item }, index) => (
