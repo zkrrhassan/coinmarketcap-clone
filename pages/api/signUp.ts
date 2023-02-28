@@ -1,83 +1,66 @@
 import bcrypt from 'bcrypt';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { createTransport } from 'nodemailer';
-import jwt from 'jsonwebtoken';
+
 import { prisma } from 'prisma/prisma';
+
+const allowedMethods = ['POST'];
 
 export default async function handler(
 	req: NextApiRequest,
 	res: NextApiResponse
 ) {
-	const { email, password } = req.body;
-
 	try {
-		const hashedPassword = await bcrypt.hash(password, 12);
-
-		// check if name is occupied
-		for (;;) {
-			const name = createUserName();
-			const occupied = await prisma.user.findFirst({
-				where: {
-					name,
-				},
-			});
-			if (occupied) continue;
-
-			const user = await prisma.user.create({
-				data: {
-					email,
-					password: hashedPassword,
-					name,
-					displayName: name,
-				},
-			});
-			await prisma.watchlist.create({
-				data: {
-					name: 'My First Watchlist',
-					isMain: true,
-					userId: user.id,
-				},
-			});
-			break;
+		if (!allowedMethods.includes(req.method!) || req.method == 'OPTIONS') {
+			return res.status(405).send({ message: 'Method not allowed.' });
 		}
 
-		await sendVerificationEmail(email);
+		const { email, password } = req.body;
+		const hashedPassword = await bcrypt.hash(password, 12);
 
-		return res.status(200).end();
-	} catch (err) {
-		return res.status(503).json({ err });
+		// generate user name
+		const name = await generateUserName();
+
+		//create user
+		const user = await prisma.user.create({
+			data: {
+				email,
+				password: hashedPassword,
+				name,
+				displayName: name,
+			},
+		});
+
+		//create first watchlist
+		await prisma.watchlist.create({
+			data: {
+				name: 'My First Watchlist',
+				isMain: true,
+				userId: user.id,
+			},
+		});
+
+		return res.status(200).json(user);
+	} catch (error) {
+		console.error(error);
+		return res.status(500).send({ message: 'Server error!' });
 	}
 }
-const EMAIL_SECRET = 'filox-secret';
 
-async function sendVerificationEmail(email: string) {
-	const transport = createTransport(process.env.EMAIL_SERVER);
-
-	try {
-		jwt.sign(
-			{
-				email,
+const generateUserName = async (): Promise<string> => {
+	for (;;) {
+		const name = createUserName();
+		const occupied = await prisma.user.findUnique({
+			where: {
+				name,
 			},
-			EMAIL_SECRET,
-			{
-				expiresIn: 60 * 15,
-			},
-			(err, emailToken) => {
-				const url = `http://localhost:3000/api/confirmation/${emailToken}`;
+		});
+		if (occupied) continue;
+		else return name;
+	}
+};
 
-				transport.sendMail({
-					to: email,
-					from: process.env.EMAIL_FROM,
-					subject: 'Confirm Email',
-					html: `Please click this email to confirm your email: <a href="${url}">${url}</a>`,
-				});
-			}
-		);
-	} catch (error) {}
-}
 const createUserName = () => {
-	const CHARSET =
-		'0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM';
+	const CHARSET = 'wertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM';
 	const NAME_LENGTH = 10;
 
 	return [...Array(NAME_LENGTH)]
