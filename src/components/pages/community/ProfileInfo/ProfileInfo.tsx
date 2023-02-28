@@ -30,7 +30,11 @@ const ProfileInfo = () => {
 		query: { name },
 	} = useRouter();
 
-	const { data: user, isLoading } = useQuery({
+	const {
+		data: user,
+		isLoading,
+		isError,
+	} = useQuery({
 		queryKey: ['userProfile', name],
 		queryFn: async () =>
 			(
@@ -43,52 +47,51 @@ const ProfileInfo = () => {
 		enabled: !!name,
 	});
 
+	if (isLoading) return <div>Loading...</div>;
+
+	if (isError) return <div></div>;
+
 	return (
-		<>
-			{isLoading && <div>Loading...</div>}
-			{user && (
-				<ProfileWrapper>
-					<ProfileData>
-						<ImageWrapper>
-							<ProfileImage
-								source={user.image && `/uploads/${user.image}.jpeg`}
-								firstLetter={user.name.charAt(0)}
-								width={110}
-								height={110}
-								variant="large"
-							/>
-						</ImageWrapper>
-						<ProfileContent>
-							<ProfileNameWrapper>
-								<ProfileDisplayName>{user.name}</ProfileDisplayName>
-								<ProfileName>@displayName</ProfileName>
-								<ProfileStatisticWrapper>
-									<ProfileStatistic>
-										<StatisticNumber>0</StatisticNumber> Following
-									</ProfileStatistic>
-									<ProfileStatistic>
-										<StatisticNumber>0</StatisticNumber> Followers
-									</ProfileStatistic>
-								</ProfileStatisticWrapper>
-							</ProfileNameWrapper>
-							<Link href="/community/edit-profile" passHref>
-								<EditButtonWrapper>
-									<EditButton>
-										<FontAwesomeIcon icon={faPenToSquare} />
-										<EditButtonText>Edit</EditButtonText>
-									</EditButton>
-								</EditButtonWrapper>
-							</Link>
-						</ProfileContent>
-					</ProfileData>
-					{user.emailVerified && (
-						<ProfileJoined>
-							Joined {formatToShortDate(new Date(user.emailVerified))}
-						</ProfileJoined>
-					)}
-				</ProfileWrapper>
+		<ProfileWrapper>
+			<ProfileData>
+				<ImageWrapper>
+					<ProfileImage
+						source={user.image}
+						firstLetter={user.name.charAt(0)}
+						width={110}
+						height={110}
+						variant="large"
+					/>
+				</ImageWrapper>
+				<ProfileContent>
+					<ProfileNameWrapper>
+						<ProfileDisplayName>{user.name}</ProfileDisplayName>
+						<ProfileName>@displayName</ProfileName>
+						<ProfileStatisticWrapper>
+							<ProfileStatistic>
+								<StatisticNumber>0</StatisticNumber> Following
+							</ProfileStatistic>
+							<ProfileStatistic>
+								<StatisticNumber>0</StatisticNumber> Followers
+							</ProfileStatistic>
+						</ProfileStatisticWrapper>
+					</ProfileNameWrapper>
+					<Link href="/community/edit-profile" passHref>
+						<EditButtonWrapper>
+							<EditButton>
+								<FontAwesomeIcon icon={faPenToSquare} />
+								<EditButtonText>Edit</EditButtonText>
+							</EditButton>
+						</EditButtonWrapper>
+					</Link>
+				</ProfileContent>
+			</ProfileData>
+			{user.emailVerified && (
+				<ProfileJoined>
+					Joined {formatToShortDate(new Date(user.emailVerified))}
+				</ProfileJoined>
 			)}
-		</>
+		</ProfileWrapper>
 	);
 };
 
