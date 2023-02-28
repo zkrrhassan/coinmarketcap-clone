@@ -5,25 +5,15 @@ import axios from 'axios';
 import { GetServerSideProps } from 'next';
 import HomeTable from 'components/pages/home/HomeTable/HomeTable';
 import SEO from 'components/SEO/SEO';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/router';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const coins = await axios.get(`${process.env.CMC_API_URI}/coins/markets`, {
-		params: {
-			vs_currency: 'usd',
-			order: 'market_cap_desc',
-			per_page: 100,
-			sparkline: true,
-			page: query.page ?? 1,
-			price_change_percentage: '1h,24h,7d',
-		},
-	});
-
-	const list = await axios.get(`${process.env.CMC_API_URI}/coins/list`);
+	// const list = await axios.get(`${process.env.CMC_API_URI}/coins/list`);
 
 	return {
 		props: {
-			initialCoins: coins.data,
-			totalCoins: list.data.length,
+			// totalCoins: list.data.length,
 		},
 	};
 };
@@ -46,10 +36,26 @@ export interface CoinData {
 	};
 }
 
-const Home: NextPage<{ initialCoins: CoinData[]; totalCoins: number }> = ({
-	initialCoins,
-	totalCoins,
-}) => {
+const Home: NextPage<{ totalCoins: number }> = ({ totalCoins }) => {
+	const { query, isReady } = useRouter();
+	const { data: initialCoins } = useQuery({
+		queryKey: ['initialCoins'],
+		queryFn: async () =>
+			(
+				await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/coins/markets`, {
+					params: {
+						vs_currency: 'usd',
+						order: 'market_cap_desc',
+						per_page: 100,
+						sparkline: true,
+						page: query.page ?? 1,
+						price_change_percentage: '1h,24h,7d',
+					},
+				})
+			).data,
+		enabled: isReady,
+	});
+
 	return (
 		<>
 			<SEO />
