@@ -14,7 +14,6 @@ const Watchlist = () => {
 		null
 	);
 	const [coins, setCoins] = useState([]);
-	// WATCHLIST QUERY ["coinA", "coinB", "coinC"]
 	const { data: watchlists } = useQuery({
 		queryKey: ['watchlists', userId],
 		queryFn: async () => {
