@@ -1,19 +1,30 @@
-import type { NextPage } from 'next';
-import Pagination from 'components/Pagination/Pagination';
-import SectionHeader from 'components/SectionHeader/SectionHeader';
+import type { GetServerSideProps } from 'next';
 import axios from 'axios';
-import { GetServerSideProps } from 'next';
+import SectionHeader from 'components/SectionHeader/SectionHeader';
+import Pagination from 'components/Pagination/Pagination';
 import HomeTable from 'components/pages/home/HomeTable/HomeTable';
 import SEO from 'components/SEO/SEO';
-import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/router';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	// const list = await axios.get(`${process.env.CMC_API_URI}/coins/list`);
+	const page = query.page as string | undefined;
+	const coins = axios.get(`${process.env.API_URL}/coins/markets`, {
+		params: {
+			vs_currency: 'usd',
+			order: 'market_cap_desc',
+			per_page: 100,
+			sparkline: true,
+			page: page ?? 1,
+			price_change_percentage: '1h,24h,7d',
+		},
+	});
+
+	const list = axios.get(`${process.env.API_URL}/coins/list`);
+	const result = await Promise.all([coins, list]);
 
 	return {
 		props: {
-			// totalCoins: list.data.length,
+			coins: result[0].data,
+			totalCoins: result[1].data.length,
 		},
 	};
 };
@@ -36,26 +47,12 @@ export interface CoinData {
 	};
 }
 
-const Home: NextPage<{ totalCoins: number }> = ({ totalCoins }) => {
-	const { query, isReady } = useRouter();
-	const { data: initialCoins } = useQuery({
-		queryKey: ['initialCoins'],
-		queryFn: async () =>
-			(
-				await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/coins/markets`, {
-					params: {
-						vs_currency: 'usd',
-						order: 'market_cap_desc',
-						per_page: 100,
-						sparkline: true,
-						page: query.page ?? 1,
-						price_change_percentage: '1h,24h,7d',
-					},
-				})
-			).data,
-		enabled: isReady,
-	});
+interface HomeProps {
+	coins: CoinData[];
+	totalCoins: number;
+}
 
+const Home = ({ totalCoins, coins }: HomeProps) => {
 	return (
 		<>
 			<SEO />
@@ -63,7 +60,7 @@ const Home: NextPage<{ totalCoins: number }> = ({ totalCoins }) => {
 				title="Today's Cryptocurrency Prices by Market"
 				description="Lorem ipsum dolor sit amet, consectetur adipisicing elit. Optio officia laboriosam ad, rerum iste eaque facilis tempora nam maiores nihil?"
 			/>
-			<HomeTable initialCoins={initialCoins} />
+			<HomeTable initialCoins={coins} />
 			<Pagination totalItems={totalCoins} itemsPerPage={100} uri="/" />
 		</>
 	);
