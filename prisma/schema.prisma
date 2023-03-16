@@ -70,7 +70,7 @@ model Watchlist {
   isMain      Boolean
   coinIds     String[]
 
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 }
 
@@ -82,7 +82,7 @@ model Post {
   status    String?
   comments  Comment[]
 
-  author   User   @relation(fields: [authorId], references: [id])
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId String
 }
 
@@ -93,9 +93,9 @@ model Comment {
   likes     String[]
   createdAt DateTime @default(now()) @db.Date
 
-  post   Post   @relation(fields: [postId], references: [id])
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId String
 
-  author   User   @relation(fields: [authorId], references: [id])
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId String
 }
