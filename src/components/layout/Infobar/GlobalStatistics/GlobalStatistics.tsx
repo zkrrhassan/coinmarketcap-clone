@@ -17,6 +17,7 @@ interface CoinsGlobal {
 	market_cap_percentage: {
 		[key: string]: number;
 	};
+	market_cap_change_percentage_24h_usd: number;
 }
 
 const GlobalStatistics = () => {
@@ -26,12 +27,15 @@ const GlobalStatistics = () => {
 		isError,
 	} = useQuery({
 		queryKey: ['global'],
-		queryFn: async () => (await axios.get<CoinsGlobal>('/api/global')).data,
+		queryFn: async () =>
+			(
+				await axios.get<{ data: CoinsGlobal }>(
+					`${process.env.NEXT_PUBLIC_API_URL}/global`
+				)
+			).data.data,
 	});
 
-	if (isLoading) return <GlobalStatisticsContainer />;
-
-	if (isError) return <GlobalStatisticsContainer />;
+	if (isLoading || isError) return <GlobalStatisticsContainer />;
 
 	const {
 		active_cryptocurrencies,
