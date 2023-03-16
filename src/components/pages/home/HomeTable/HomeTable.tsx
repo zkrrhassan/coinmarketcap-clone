@@ -30,18 +30,17 @@ const HomeTable = ({ initialCoins }: HomeTableProps) => {
 	const userId = session?.user.id;
 	const { refetch } = useQuery({
 		queryKey: ['watchlistCoins', status],
-		queryFn: async () => {
-			const data = (
+		queryFn: async () =>
+			(
 				await axios.get<Watchlist>('/api/watchlist/get', {
 					params: {
 						userId,
 						isMain: true,
 					},
 				})
-			).data.coinIds;
-
+			).data.coinIds,
+		onSuccess: (data) => {
 			setCoins(processCoinsData(data));
-			return data;
 		},
 		enabled: !!userId,
 		refetchOnWindowFocus: false,
@@ -50,8 +49,7 @@ const HomeTable = ({ initialCoins }: HomeTableProps) => {
 		colors: { upColor, downColor },
 	} = useTheme();
 
-	const processCoinsData = (onWatchlist?: Watchlist['coinIds']) => {
-		if (!onWatchlist) return initialCoins;
+	const processCoinsData = (onWatchlist: Watchlist['coinIds']) => {
 		return initialCoins.map((coin) => {
 			return {
 				...coin,
