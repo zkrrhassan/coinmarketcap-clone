@@ -5,26 +5,26 @@ import axios from 'axios';
 import { Watchlist } from '@prisma/client';
 import WatchlistList from 'components/pages/watchlist/WatchlistList/WatchlistList';
 import WatchlistTable from 'components/pages/watchlist/WatchlistTable/WatchlistTable';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 const Watchlist = () => {
-	const { data: session, status } = useSession();
+	const { data: session } = useSession();
 	const userId = session?.user.id;
 	const [currentWatchlist, setCurrentWatchlist] = useState<Watchlist | null>(
 		null
 	);
 	const [coins, setCoins] = useState([]);
+	// WATCHLISTS QUERY
 	const { data: watchlists } = useQuery({
 		queryKey: ['watchlists', userId],
-		queryFn: async () => {
-			return (
+		queryFn: async () =>
+			(
 				await axios.get<Watchlist[]>('/api/watchlist/getAll', {
 					params: {
 						userId: userId,
 					},
 				})
-			).data;
-		},
+			).data,
 		onSuccess(data) {
 			const mainWatchlist = data.find((watchlist) => watchlist.isMain === true);
 			setCurrentWatchlist(mainWatchlist!);
@@ -32,15 +32,17 @@ const Watchlist = () => {
 		enabled: !!userId,
 		refetchOnWindowFocus: false,
 	});
-	// COINS QUERY
+	// COINS ON WATCHLIST QUERY
 	const _ = useQuery({
 		queryKey: ['coins', currentWatchlist],
 		queryFn: async () => {
+			if (currentWatchlist?.coinIds.length === 0) return null;
+
 			return (
 				await axios.get(`https://api.coingecko.com/api/v3/coins/markets`, {
 					params: {
 						vs_currency: 'usd',
-						ids: currentWatchlist!.coinIds.join(','),
+						ids: currentWatchlist?.coinIds.join(','),
 						order: 'market_cap_desc',
 						per_page: 100,
 						sparkline: 'true',
@@ -54,17 +56,19 @@ const Watchlist = () => {
 		refetchOnWindowFocus: false,
 	});
 	// UPDATE CURRENT WATCHLIST (after coin remove)
-	const getWatchlist = useMutation({
-		mutationFn: async () => {
-			return (
+	const { refetch } = useQuery({
+		queryKey: ['getWatchlist'],
+		queryFn: async () =>
+			(
 				await axios.get<Watchlist>('api/watchlist/get', {
 					params: {
 						watchlistId: currentWatchlist!.id,
 					},
 				})
-			).data;
-		},
+			).data,
 		onSuccess: (data) => setCurrentWatchlist(data),
+		refetchOnWindowFocus: false,
+		enabled: false,
 	});
 
 	const changeCurrentWatchlist = (name: string) => {
@@ -79,7 +83,7 @@ const Watchlist = () => {
 
 	return (
 		<Container>
-			{status !== 'authenticated' ? (
+			{!session ? (
 				<>
 					<p>Sign up today and get</p>
 					<p>your own crypto Watchlist</p>
@@ -94,10 +98,7 @@ const Watchlist = () => {
 						/>
 					)}
 					{coins && (
-						<WatchlistTable
-							coins={coins}
-							watchlistCallback={getWatchlist.mutate}
-						/>
+						<WatchlistTable coins={coins} watchlistCallback={refetch} />
 					)}
 				</>
 			)}
