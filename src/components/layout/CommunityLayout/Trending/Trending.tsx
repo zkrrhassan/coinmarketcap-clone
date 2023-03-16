@@ -35,7 +35,7 @@ const Trending = () => {
 		queryFn: async () =>
 			(
 				await axios.get<{ coins: TrendingCoin[] }>(
-					`${process.env.NEXT_PUBLIC_CMC_API_URI}/search/trending`
+					`${process.env.NEXT_PUBLIC_API_URL}/search/trending`
 				)
 			).data.coins,
 	});

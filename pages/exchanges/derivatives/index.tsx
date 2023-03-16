@@ -8,16 +8,13 @@ import Link from 'next/link';
 import { formatLargeValue } from 'utils/formatValues';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const res = await axios.get(
-		`${process.env.CMC_API_URI}/derivatives/exchanges`,
-		{
-			params: {
-				per_page: 100,
-				page: query.page ?? 1,
-				order: 'trade_volume_24h_btc_desc',
-			},
-		}
-	);
+	const res = await axios.get(`${process.env.API_URL}/derivatives/exchanges`, {
+		params: {
+			per_page: 100,
+			page: query.page ?? 1,
+			order: 'trade_volume_24h_btc_desc',
+		},
+	});
 
 	return {
 		props: {

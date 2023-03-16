@@ -18,7 +18,7 @@ interface CategoriesProps {
 }
 
 export const getServerSideProps: GetServerSideProps = async () => {
-	const res = await axios.get(`${process.env.CMC_API_URI}/coins/categories`);
+	const res = await axios.get(`${process.env.API_URL}/coins/categories`);
 
 	return {
 		props: {

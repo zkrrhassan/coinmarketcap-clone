@@ -67,7 +67,7 @@ interface CoinProps {
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
 	const getCoinInfo = () => {
-		return axios.get(`${process.env.CMC_API_URI}/coins/${query.slug}`);
+		return axios.get(`${process.env.API_URL}/coins/${query.slug}`);
 	};
 
 	const result = await Promise.all([getCoinInfo()]);

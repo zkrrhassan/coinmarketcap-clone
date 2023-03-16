@@ -7,7 +7,7 @@ import type { GetServerSideProps, NextPage } from 'next';
 import Link from 'next/link';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const coins = await axios.get(`${process.env.CMC_API_URI}/nfts/list`, {
+	const coins = await axios.get(`${process.env.API_URL}/nfts/list`, {
 		params: {
 			page: query.page ?? 1,
 			perPage: 100,
