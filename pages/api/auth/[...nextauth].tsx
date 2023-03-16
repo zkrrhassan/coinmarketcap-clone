@@ -58,15 +58,9 @@ function requestWrapper(
 					if (!credentials) return null;
 					const { email, password } = credentials;
 					try {
-						const user = (
-							await axios.post<User>(
-								`${process.env.NEXTAUTH_URL}/api/user/get`,
-								{
-									email,
-									password,
-								}
-							)
-						).data;
+						const user = await prisma.user.findFirst({
+							where: { email },
+						});
 
 						if (user !== null) {
 							const valid = await confirmPasswordHash(password, user.password);
