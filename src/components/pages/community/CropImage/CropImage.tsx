@@ -72,7 +72,7 @@ const CropImage = ({
 			if (!croppedImage) return;
 
 			const formData = new FormData();
-			formData.append('file', image);
+			formData.append('file', croppedImage);
 			formData.append(
 				'upload_preset',
 				process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
