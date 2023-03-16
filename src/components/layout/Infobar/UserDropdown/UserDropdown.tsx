@@ -58,7 +58,7 @@ const UserDropdown = () => {
 				<UserMenuWrapper>
 					<ImageWrapper>
 						<ProfileImage
-							source={image && `/uploads/${image}.jpeg`}
+							source={image}
 							firstLetter={name.charAt(0)}
 							width={28}
 							height={28}
@@ -71,7 +71,7 @@ const UserDropdown = () => {
 								<a>
 									<UserPreview>
 										<ProfileImage
-											source={image && `/uploads/${image}.jpeg`}
+											source={image}
 											firstLetter={name.charAt(0)}
 											width={64}
 											height={64}

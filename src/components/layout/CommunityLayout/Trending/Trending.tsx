@@ -26,12 +26,16 @@ interface TrendingCoin {
 }
 
 const Trending = () => {
-	const { data: trending, refetch } = useQuery({
+	const {
+		data: trending,
+		refetch,
+		isLoading,
+	} = useQuery({
 		queryKey: ['trending'],
 		queryFn: async () =>
 			(
 				await axios.get<{ coins: TrendingCoin[] }>(
-					`${process.env.NEXT_PUBLIC_CMC_API_URI}/search/trending`
+					`${process.env.NEXT_PUBLIC_API_URL}/search/trending`
 				)
 			).data.coins,
 	});
@@ -42,6 +46,7 @@ const Trending = () => {
 				<p>🔥 Trending</p>
 				<RefreshButton onClick={() => refetch()}>Refresh</RefreshButton>
 			</TrendingHeader>
+			{isLoading && <div>Loading</div>}
 			{trending && (
 				<ul>
 					{trending.map(({ item }, index) => (

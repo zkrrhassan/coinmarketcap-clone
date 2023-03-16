@@ -1,14 +1,14 @@
 import {
 	ColorType,
 	createChart,
+	PriceScaleMode,
 	SingleValueData,
-	WhitespaceData,
 } from 'lightweight-charts';
 import React, { useEffect, useRef } from 'react';
 import { Container } from 'styled/elements/Container';
 
 interface ChartProps {
-	data: (SingleValueData | WhitespaceData)[];
+	data: SingleValueData[];
 	colors: {
 		backgroundColor?: string;
 		lineColor?: string;
@@ -43,13 +43,34 @@ const Chart = ({
 		const chart = createChart(chartContainerRef.current, {
 			layout: {
 				background: { type: ColorType.Solid, color: backgroundColor },
-				textColor,
+				textColor: 'gray',
 			},
 			width: chartContainerRef.current.clientWidth,
 			height: 300,
 			timeScale: {
 				timeVisible: true,
 				secondsVisible: false,
+				borderVisible: false,
+			},
+			rightPriceScale: {
+				borderVisible: false,
+			},
+			grid: {
+				vertLines: {
+					visible: false,
+				},
+			},
+			localization: {
+				priceFormatter: new Intl.NumberFormat('en-US', {
+					notation: 'compact',
+					compactDisplay: 'short',
+					maximumFractionDigits: 2,
+					minimumFractionDigits: 1,
+				}).format,
+			},
+			leftPriceScale: {
+				mode: PriceScaleMode.Normal,
+				autoScale: true,
 			},
 		});
 		chart.timeScale().fitContent();

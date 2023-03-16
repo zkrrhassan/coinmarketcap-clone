@@ -6,7 +6,7 @@ import type { GetServerSideProps, NextPage } from 'next';
 import Link from 'next/link';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const res = await axios.get(`${process.env.CMC_API_URI}/nfts/list`, {
+	const res = await axios.get(`${process.env.API_URL}/nfts/list`, {
 		params: {
 			order: 'market_cap_usd_desc',
 			per_page: 10,

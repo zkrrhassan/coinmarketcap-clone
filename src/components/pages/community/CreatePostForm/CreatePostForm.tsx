@@ -89,7 +89,7 @@ const CreatePostForm = ({ comment, postId }: PostFormProps) => {
 					width={56}
 					height={56}
 					firstLetter="Guest"
-					source={session?.user.image && `/uploads/${session.user.image}.jpeg`}
+					source={session?.user.image}
 				/>
 			</ImageWrapper>
 			<PostFormWrapper>

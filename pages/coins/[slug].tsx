@@ -67,36 +67,19 @@ interface CoinProps {
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
 	const getCoinInfo = () => {
-		return axios.get(`${process.env.CMC_API_URI}/coins/${query.slug}`);
-	};
-	const getCoinHistory = () => {
-		return axios.get(
-			`${process.env.CMC_API_URI}/coins/${query.slug}/market_chart`,
-			{
-				params: {
-					vs_currency: 'usd',
-					days: '1',
-				},
-			}
-		);
+		return axios.get(`${process.env.API_URL}/coins/${query.slug}`);
 	};
 
-	const result = await Promise.all([getCoinInfo(), getCoinHistory()]);
+	const result = await Promise.all([getCoinInfo()]);
 
 	return {
 		props: {
 			info: result[0].data,
-			historical: result[1].data,
 		},
 	};
 };
 
-const Coin = ({ info, historical }: CoinProps) => {
-	const initialData = historical.prices.map((el) => ({
-		time: (el[0] / 1000) as Time,
-		value: el[1],
-	}));
-
+const Coin = ({ info }: CoinProps) => {
 	return (
 		<>
 			<SEO
@@ -111,7 +94,7 @@ const Coin = ({ info, historical }: CoinProps) => {
 				<>
 					<CoinData info={info} />
 					<LinksSectionMobile links={info.links} name={info.name} />
-					<ChartSection data={initialData} name={info.name} />
+					<ChartSection name={info.name} />
 				</>
 			)}
 		</>

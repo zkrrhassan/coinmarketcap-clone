@@ -1,6 +1,10 @@
+import { useMutation } from '@tanstack/react-query';
+import axios from 'axios';
+import { useSession } from 'next-auth/react';
 import React, { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { Area } from 'react-easy-crop/types';
+import { toast } from 'react-hot-toast';
 import {
 	CropperWrapper,
 	Modal,
@@ -11,30 +15,70 @@ import {
 
 interface CropImageProps {
 	image: string;
-	setCroppedImage: (image: Blob) => void;
+	refetch: () => void;
 	visible: boolean;
 	closeCallback: () => void;
 }
 
 const CropImage = ({
 	image,
-	setCroppedImage,
+	refetch,
 	visible,
 	closeCallback,
 }: CropImageProps) => {
+	const { data: session } = useSession();
 	const [crop, setCrop] = useState({ x: 0, y: 0 });
 	const [zoom, setZoom] = useState(1);
 	const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 	const onCropComplete = useCallback((_: Area, croppedAreaPixels: Area) => {
 		setCroppedAreaPixels(croppedAreaPixels);
 	}, []);
+	const saveImage = useMutation({
+		mutationFn: async (image: string) => {
+			await axios.post(
+				'/api/user/update',
+				{
+					image,
+				},
+				{
+					params: {
+						userId: session?.user.id,
+					},
+				}
+			);
+		},
+	});
+	const uploadToColudinary = useMutation({
+		mutationFn: async (data: FormData) =>
+			(
+				await axios.post<{ secure_url: string }>(
+					process.env.NEXT_PUBLIC_CLOUDINARY_URL!,
+					data
+				)
+			).data,
+		onSuccess: ({ secure_url }) => {
+			saveImage.mutate(secure_url);
+
+			toast('Successfuly set image');
+
+			refetch();
+		},
+	});
 
 	const cropImage = async () => {
 		if (!image || !croppedAreaPixels) return;
 		try {
 			const croppedImage = await getCroppedImg(image, croppedAreaPixels);
 			if (!croppedImage) return;
-			setCroppedImage(croppedImage);
+
+			const formData = new FormData();
+			formData.append('file', image);
+			formData.append(
+				'upload_preset',
+				process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
+			);
+
+			uploadToColudinary.mutate(formData);
 		} catch (error) {
 			console.error(error);
 		}

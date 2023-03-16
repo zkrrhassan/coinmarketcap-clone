@@ -5,7 +5,7 @@ import SEO from 'components/SEO/SEO';
 import type { GetServerSideProps, NextPage } from 'next';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const res = await axios.get(`${process.env.CMC_API_URI}/exchanges`, {
+	const res = await axios.get(`${process.env.API_URL}/exchanges`, {
 		params: {
 			per_page: 100,
 			page: query.page,

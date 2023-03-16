@@ -11,7 +11,7 @@ import { capitalize } from 'lodash';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
 	const res = await axios.get(
-		`${process.env.CMC_API_URI}/exchanges/${query.slug}`
+		`${process.env.CAPI_URL}/exchanges/${query.slug}`
 	);
 
 	return {

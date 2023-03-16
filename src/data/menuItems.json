@@ -11,34 +11,9 @@
 						"link": "/"
 					},
 					{
-						"icon": "RecentlyIcon.svg",
-						"text": "Recently Added",
-						"link": "/recent"
-					},
-					{
 						"icon": "CategoriesIcon.svg",
 						"text": "Categories",
 						"link": "/categories"
-					},
-					{
-						"icon": "SpotlightIcon.svg",
-						"text": "Spotlight",
-						"link": "/spotlight"
-					},
-					{
-						"icon": "GainersLoosersIcon.svg",
-						"text": "Gainers & Loosers",
-						"link": "/gainers-and-loosers"
-					},
-					{
-						"icon": "GlobalChartsIcon.svg",
-						"text": "Global Charts",
-						"link": "/global-charts"
-					},
-					{
-						"icon": "HistoricalSnapshotsIcon.svg",
-						"text": "Historical Snapshots",
-						"link": "/historical"
 					}
 				]
 			},
@@ -54,21 +29,6 @@
 						"icon": "TopCollectionsIcon.svg",
 						"text": "Top Collections",
 						"link": "/nft/collections"
-					},
-					{
-						"icon": "UpcomingSalesIcon.svg",
-						"text": "Upcoming Sales",
-						"link": "/"
-					}
-				]
-			},
-			{
-				"category": "On Chain Data",
-				"items": [
-					{
-						"icon": "ChainRankingIcon.svg",
-						"text": "Chain Ranking",
-						"link": "/"
 					}
 				]
 			}
@@ -88,11 +48,6 @@
 						"icon": "DerivativesIcon.svg",
 						"text": "Derivatives",
 						"link": "/exchanges/derivatives"
-					},
-					{
-						"icon": "DexIcon.svg",
-						"text": "Dex",
-						"link": "/"
 					}
 				]
 			}
@@ -102,18 +57,7 @@
 		"multiSubmenu": false,
 		"list": [
 			{
-				"items": [
-					{
-						"icon": "FeedsIcon.svg",
-						"text": "Feeds",
-						"link": "/community"
-					},
-					{
-						"icon": "ArticlesIcon.svg",
-						"text": "Articles",
-						"link": "/"
-					}
-				]
+				"items": []
 			}
 		]
 	},
@@ -122,68 +66,15 @@
 		"list": [
 			{
 				"category": "Products",
-				"items": [
-					{
-						"icon": "ConverterIcon.svg",
-						"text": "Converter",
-						"link": "/"
-					},
-					{
-						"icon": "MobileAppsIcon.svg",
-						"text": "Mobile Apps",
-						"link": "/"
-					},
-					{
-						"icon": "BlockchainExplorerIcon.svg",
-						"text": "Blockchain Explorer",
-						"link": "/"
-					},
-					{
-						"icon": "JobsBoardIcon.svg",
-						"text": "Jobs Board",
-						"link": "/"
-					}
-				]
+				"items": []
 			},
 			{
 				"category": "Campaigns",
-				"items": [
-					{
-						"icon": "FreeAirdropsIcon.svg",
-						"text": "Free Airdrops",
-						"link": "/"
-					},
-					{
-						"icon": "RewardsIcon.svg",
-						"text": "Diamond Rewards",
-						"link": "/"
-					},
-					{
-						"icon": "ReferralProgramIcon.svg",
-						"text": "Referral Program",
-						"link": "/"
-					},
-					{
-						"icon": "LearnEarnIcon.svg",
-						"text": "Learn & Earn",
-						"link": "/"
-					}
-				]
+				"items": []
 			},
 			{
 				"category": "Calendars",
-				"items": [
-					{
-						"icon": "IcoCalendarIcon.svg",
-						"text": "ICO Calendar",
-						"link": "/"
-					},
-					{
-						"icon": "CalendarIcon.svg",
-						"text": "Events Calendar",
-						"link": "/"
-					}
-				]
+				"items": []
 			}
 		]
 	},
@@ -191,38 +82,7 @@
 		"multiSubmenu": false,
 		"list": [
 			{
-				"items": [
-					{
-						"icon": "AlexandriaIcon.svg",
-						"text": "Alexandria",
-						"link": "/"
-					},
-					{
-						"icon": "NewsIcon.svg",
-						"text": "News",
-						"link": "/"
-					},
-					{
-						"icon": "ConferenceIcon.svg",
-						"text": "Conference",
-						"link": "/"
-					},
-					{
-						"icon": "MarketUpdatesIcon.svg",
-						"text": "Market Updates",
-						"link": "/"
-					},
-					{
-						"icon": "GlossaryIcon.svg",
-						"text": "Glossary",
-						"link": "/"
-					},
-					{
-						"icon": "WhereToBuyIcon.svg",
-						"text": "Where to Buy",
-						"link": "/"
-					}
-				]
+				"items": []
 			}
 		]
 	}

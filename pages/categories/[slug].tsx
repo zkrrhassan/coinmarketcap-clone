@@ -12,7 +12,7 @@ interface CategoriesProps {
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const res = await axios.get(`${process.env.CMC_API_URI}/coins/markets`, {
+	const res = await axios.get(`${process.env.API_URL}/coins/markets`, {
 		params: {
 			vs_currency: 'usd',
 			order: 'market_cap_desc',

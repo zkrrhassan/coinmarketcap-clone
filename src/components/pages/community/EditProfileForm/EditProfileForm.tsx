@@ -1,9 +1,8 @@
-import React, { ChangeEvent, useEffect, useRef, useState } from 'react';
+import React, { ChangeEvent, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
 import axios from 'axios';
 import CropImage from '../CropImage/CropImage';
 import ProfileImage from 'components/ProfileImage/ProfileImage';
@@ -16,18 +15,18 @@ import {
 	SaveButton,
 } from './EditProfileForm.styled';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { User } from '@prisma/client';
 
 const editUserSchema = z.object({
 	displayName: z.string().max(20).nullable(),
 	name: z.string().max(20),
 	biography: z.string().max(160).nullable(),
-	birthday: z.date().nullable(),
+	birthday: z.string().nullable(),
 	website: z.string().max(100).nullable(),
-	image: typeof window === 'undefined' ? z.any() : z.instanceof(Blob),
+	image: z.string().nullable(),
 });
 
 type EditUserInputs = z.infer<typeof editUserSchema>;
-type EditUserKey = keyof EditUserInputs;
 
 const EditProfileForm = () => {
 	const { register, handleSubmit, setValue } = useForm<EditUserInputs>({
@@ -37,13 +36,18 @@ const EditProfileForm = () => {
 	const [cropperOpen, setCropperOpen] = useState<boolean>(false);
 	const [imageToCrop, setImageToCrop] = useState<string | null>(null);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
-	const { data: session, status } = useSession();
+	const { data: session } = useSession();
 	const name = session?.user.name;
-	const { data: user, refetch } = useQuery({
-		queryKey: ['userEdit', name],
+	const {
+		data: user,
+		refetch,
+		isLoading,
+		isError,
+	} = useQuery({
+		queryKey: ['user', name],
 		queryFn: async () =>
 			(
-				await axios.get(`/api/user/get`, {
+				await axios.get<Omit<User, 'password'>>(`/api/user/get`, {
 					params: {
 						name,
 					},
@@ -51,14 +55,22 @@ const EditProfileForm = () => {
 			).data,
 		enabled: !!name,
 		refetchOnWindowFocus: false,
-	});
-	const uploadImage = useMutation({
-		mutationFn: async (body: FormData) =>
-			(await axios.post<{ imageName: string }>('/api/images/upload', body))
-				.data,
+		onSuccess: ({ biography, birthday, displayName, name, website, image }) => {
+			setValue('biography', biography);
+			setValue(
+				'birthday',
+				birthday ? (birthday as unknown as string).substring(0, 10) : null
+			);
+			setValue('displayName', displayName);
+			setValue('name', name);
+			setValue('website', website);
+			setValue('image', image);
+		},
 	});
 	const saveChanges = useMutation({
-		mutationFn: async (userData: EditUserInputs) => {
+		mutationFn: async (
+			userData: Omit<EditUserInputs, 'image'> | Pick<EditUserInputs, 'image'>
+		) => {
 			await axios.post(
 				'/api/user/update',
 				{
@@ -72,7 +84,7 @@ const EditProfileForm = () => {
 			);
 		},
 	});
-	const { push } = useRouter();
+
 	const { ref, ...rest } = register('image', {
 		onChange: async (e: ChangeEvent<HTMLInputElement>) => {
 			if (!e.target.files) return;
@@ -86,65 +98,17 @@ const EditProfileForm = () => {
 		},
 	});
 
-	useEffect(() => {
-		fillValues();
-	}, [user]);
-
-	useEffect(() => {
-		if (status === 'unauthenticated') {
-			push('/');
-		}
-	}, [status]);
-
 	const handleCloseCropper = () => {
 		setCropperOpen(false);
 		setValue('image', null);
-	};
-
-	const handleChangeCroppedImage = (image: Blob) => {
-		setValue('image', image);
-
-		setCropperOpen(false);
 	};
 
 	const openFileWindow = () => {
 		fileInputRef.current?.click();
 	};
 
-	const fillValues = () => {
-		if (user) {
-			const userFileds = {
-				biography: user.biography,
-				birthday: user.birthday,
-				displayName: user.displayName,
-				name: user.name,
-				website: user.website,
-			};
-
-			Object.entries(userFileds).forEach((entry) => {
-				if (entry[0] === 'birthday') {
-					setValue(
-						entry[0] as EditUserKey,
-						new Date(entry[1] as string).toISOString().split('T')[0]
-					);
-					return;
-				}
-				setValue(entry[0] as EditUserKey, entry[1]);
-			});
-		}
-	};
-
 	const updateUser = async (inputs: EditUserInputs) => {
-		const { biography, birthday, displayName, name, website, image } = inputs;
-
-		let imageName;
-		if (image) {
-			const body = new FormData();
-			body.append('file', image);
-
-			uploadImage.mutate(body);
-			imageName = uploadImage.data?.imageName;
-		}
+		const { biography, birthday, displayName, name, website } = inputs;
 
 		saveChanges.mutate({
 			biography,
@@ -152,11 +116,16 @@ const EditProfileForm = () => {
 			displayName,
 			name,
 			website,
-			image: imageName,
 		});
 
 		refetch();
 	};
+
+	if (isLoading) return <div></div>;
+
+	if (isError) return <div></div>;
+
+	const { image, name: username } = user;
 
 	return (
 		<form onSubmit={handleSubmit(updateUser)}>
@@ -165,8 +134,8 @@ const EditProfileForm = () => {
 				<AvatarWrapper>
 					{session && (
 						<ProfileImage
-							source={`/uploads/${user.image}.jpeg`}
-							firstLetter={session.user.name.charAt(0)}
+							source={image}
+							firstLetter={username.charAt(0)}
 							width={64}
 							height={64}
 							variant="medium"
@@ -221,7 +190,7 @@ const EditProfileForm = () => {
 			{imageToCrop && (
 				<CropImage
 					image={imageToCrop}
-					setCroppedImage={handleChangeCroppedImage}
+					refetch={refetch}
 					visible={cropperOpen}
 					closeCallback={handleCloseCropper}
 				/>

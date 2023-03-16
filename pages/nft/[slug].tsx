@@ -9,7 +9,7 @@ import React from 'react';
 import { Container } from 'styled/elements/Container';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const res = await axios.get(`${process.env.CMC_API_URI}/nfts/${query.slug}`);
+	const res = await axios.get(`${process.env.API_URL}/nfts/${query.slug}`);
 
 	return {
 		props: {

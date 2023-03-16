@@ -43,7 +43,7 @@ const Submenu = ({ multiSubmenu, list }: SubmenuProps) => {
 						<Link href={item.link} key={index} passHref>
 							<ColumnItem>
 								<img
-									src={`/static/${item.icon}`}
+									src={`/static/icons/${item.icon}`}
 									alt=""
 									width={32}
 									height={32}

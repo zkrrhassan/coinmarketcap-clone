@@ -14,7 +14,7 @@ import { capitalize } from 'lodash';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
 	const res = await axios.get(
-		`${process.env.CMC_API_URI}/derivatives/exchanges/${query.slug}`,
+		`${process.env.API_URL}/derivatives/exchanges/${query.slug}`,
 		{
 			params: {
 				include_tickers: 'unexpired',
