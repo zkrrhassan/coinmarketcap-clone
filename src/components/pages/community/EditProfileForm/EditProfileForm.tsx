@@ -83,6 +83,8 @@ const EditProfileForm = () => {
 				}
 			);
 		},
+
+		onSuccess: () => refetch(),
 	});
 
 	const { ref, ...rest } = register('image', {
@@ -117,8 +119,6 @@ const EditProfileForm = () => {
 			name,
 			website,
 		});
-
-		refetch();
 	};
 
 	if (isLoading) return <div></div>;
@@ -174,13 +174,7 @@ const EditProfileForm = () => {
 			</InputWrapper>
 			<InputWrapper>
 				<Label htmlFor="birthday">Birthday</Label>
-				<Input
-					type="date"
-					id="birthday"
-					{...register('birthday', {
-						setValueAs: (v) => (v ? new Date(v) : null),
-					})}
-				/>
+				<Input type="date" id="birthday" {...register('birthday')} />
 			</InputWrapper>
 			<InputWrapper>
 				<Label htmlFor="website">Website</Label>

@@ -32,7 +32,7 @@ const getUser: NextApiHandler = async (
 			name,
 			biography,
 			website,
-			birthday,
+			birthday: new Date(birthday),
 			image,
 		},
 	});
