@@ -91,7 +91,7 @@ model Comment {
   content   String
   status    String?
   likes     String[]
-  createdAt DateTime @default(now()) @db.Date
+  createdAt DateTime @default(now()) @db.Timestamp()
 
   post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId String
