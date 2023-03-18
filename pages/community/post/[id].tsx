@@ -3,31 +3,14 @@ import axios from 'axios';
 import BackHistory from 'components/BackHistory/BackHistory';
 import CommunityLayout from 'components/layout/CommunityLayout/CommunityLayout';
 import Post from 'components/pages/community/Post/Post';
-import PostForm from 'components/pages/community/CreatePostForm/CreatePostForm';
+import CreatePostForm from 'components/pages/community/CreatePostForm/CreatePostForm';
 import { PostWithAuthor } from 'components/pages/community/ProfilePosts/ProfilePosts';
-import { GetServerSideProps } from 'next';
-import { NextPageWithLayout } from 'pages/_app';
 import React from 'react';
 import styled from 'styled-components';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/router';
+import Loader from 'styled/elements/Loader';
 
-export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const { id } = query;
-
-	const post = (
-		await axios.get('http://localhost:3000/api/post/get', {
-			params: {
-				postId: id,
-				withComments: true,
-			},
-		})
-	).data;
-
-	return {
-		props: {
-			post,
-		},
-	};
-};
 type CommentWithAuthor = Comment & {
 	author: User;
 };
@@ -35,9 +18,30 @@ type PostWithAuthorAndComments = PostWithAuthor & {
 	comments: CommentWithAuthor[];
 };
 
-const PostDetail: NextPageWithLayout<{ post: PostWithAuthorAndComments }> = ({
-	post,
-}) => {
+const PostDetail = () => {
+	const { query } = useRouter();
+	const {
+		data: post,
+		isLoading,
+		isError,
+	} = useQuery({
+		queryKey: ['postWithComments'],
+		queryFn: async () =>
+			(
+				await axios.get<PostWithAuthorAndComments>('/api/post/get', {
+					params: {
+						postId: query.id,
+						withComments: true,
+					},
+				})
+			).data,
+		enabled: !!query.id,
+	});
+
+	if (isLoading) return <Loader />;
+
+	if (isError) return <div />;
+
 	return (
 		<>
 			<BackHistory text="Post detail" />
@@ -49,7 +53,7 @@ const PostDetail: NextPageWithLayout<{ post: PostWithAuthorAndComments }> = ({
 				detailed
 				marginInline
 			/>
-			<PostForm comment postId={post.id} />
+			<CreatePostForm comment postId={post.id} />
 			<div>
 				{post.comments.map((comment) => (
 					<Post
