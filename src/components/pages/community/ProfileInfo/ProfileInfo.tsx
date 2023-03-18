@@ -65,8 +65,8 @@ const ProfileInfo = () => {
 				</ImageWrapper>
 				<ProfileContent>
 					<ProfileNameWrapper>
-						<ProfileDisplayName>{user.name}</ProfileDisplayName>
-						<ProfileName>@displayName</ProfileName>
+						<ProfileDisplayName>{user.displayName}</ProfileDisplayName>
+						<ProfileName>{user.name}</ProfileName>
 						<ProfileStatisticWrapper>
 							<ProfileStatistic>
 								<StatisticNumber>0</StatisticNumber> Following
