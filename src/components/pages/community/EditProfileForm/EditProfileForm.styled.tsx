@@ -57,4 +57,9 @@ export const SaveButton = styled.button`
 	font-weight: 600;
 	padding: 0 24px;
 	font-size: 14px;
+
+	&:disabled {
+		background: ${({ theme: { colors } }) => colors.colorNeutral5};
+		cursor: not-allowed;
+	}
 `;
