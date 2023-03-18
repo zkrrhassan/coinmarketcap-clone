@@ -84,6 +84,7 @@ function requestWrapper(
 				// Include user.id on session
 				if (session.user) {
 					session.user.id = user.id;
+					session.user.displayName = (user as User).displayName;
 				}
 
 				return session;
