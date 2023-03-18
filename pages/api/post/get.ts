@@ -21,6 +21,9 @@ const get: NextApiHandler = async (
 						include: {
 							author: true,
 						},
+						orderBy: {
+							createdAt: 'desc',
+						},
 				  }
 				: false,
 		},
