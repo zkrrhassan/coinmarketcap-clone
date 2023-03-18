@@ -1,4 +1,3 @@
-import { ColumnDef } from '@tanstack/react-table';
 import axios from 'axios';
 import Pagination from 'components/Pagination/Pagination';
 import SEO from 'components/SEO/SEO';
