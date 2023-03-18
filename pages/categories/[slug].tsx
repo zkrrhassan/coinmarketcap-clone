@@ -6,7 +6,7 @@ import { capitalize } from 'lodash';
 import type { GetServerSideProps, NextPage } from 'next';
 import { CoinData } from 'pages';
 
-interface CategoriesProps {
+interface CategoryProps {
 	coins: CoinData[];
 	category: string;
 }
@@ -32,7 +32,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query }) => {
 	};
 };
 
-const Categories: NextPage<CategoriesProps> = ({ coins, category }) => {
+const Category: NextPage<CategoryProps> = ({ coins, category }) => {
 	return (
 		<>
 			<SEO
@@ -53,4 +53,4 @@ const Categories: NextPage<CategoriesProps> = ({ coins, category }) => {
 	);
 };
 
-export default Categories;
+export default Category;

@@ -10,24 +10,23 @@ import { useAppDispatch } from 'hooks/redux';
 import { useTheme } from 'styled-components';
 import { useMutation } from '@tanstack/react-query';
 
-interface AddToWatchlistProps {
+interface WatchlistButtonProps {
 	coinId: string;
 	isOnWatchlist?: boolean;
 	watchlistCallback: () => void;
 }
 
-const AddToWatchlist = ({
+const WatchlistButton = ({
 	coinId,
 	isOnWatchlist,
 	watchlistCallback,
-}: AddToWatchlistProps) => {
+}: WatchlistButtonProps) => {
 	const { data: session } = useSession();
 	const id = session?.user.id;
 	const dispatch = useAppDispatch();
 	const {
 		colors: { textColor, star },
 	} = useTheme();
-
 	const addToWatchlist = useMutation({
 		mutationFn: async () => {
 			if (!id) throw Error('User id is required');
@@ -88,4 +87,4 @@ const AddToWatchlist = ({
 	);
 };
 
-export default AddToWatchlist;
+export default WatchlistButton;
