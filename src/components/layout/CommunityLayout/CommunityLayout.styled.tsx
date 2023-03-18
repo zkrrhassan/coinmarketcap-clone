@@ -15,4 +15,5 @@ export const CommunityLayoutContainer = styled.div`
 export const MainWrapper = styled.div`
 	flex: 2 2 0%;
 	background: ${({ theme: { colors } }) => colors.bgColor};
+	padding: 24px;
 `;
