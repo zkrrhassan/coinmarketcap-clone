@@ -18,11 +18,12 @@ const ProfileImage = ({
 	firstLetter,
 	width,
 	height,
+	variant,
 }: ProfileImageProps) => {
 	return source ? (
 		<StyledImage src={source} alt="" width={width} height={height} />
 	) : (
-		<ImagePlaceholder variant="small">{firstLetter}</ImagePlaceholder>
+		<ImagePlaceholder variant={variant}>{firstLetter}</ImagePlaceholder>
 	);
 };
 
