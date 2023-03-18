@@ -1,4 +1,5 @@
 import axios from 'axios';
+import Pagination from 'components/Pagination/Pagination';
 import SectionHeader from 'components/SectionHeader/SectionHeader';
 import SEO from 'components/SEO/SEO';
 import Table, { TableColumn } from 'components/Table/Table';
@@ -8,18 +9,24 @@ import Link from 'next/link';
 import { formatLargeValue } from 'utils/formatValues';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const res = await axios.get(`${process.env.API_URL}/derivatives/exchanges`, {
-		params: {
-			per_page: 100,
-			page: query.page ?? 1,
-			order: 'trade_volume_24h_btc_desc',
-		},
-	});
+	const derivatives = await axios.get(
+		`${process.env.API_URL}/derivatives/exchanges`,
+		{
+			params: {
+				per_page: 100,
+				page: query.page ?? 1,
+				order: 'trade_volume_24h_btc_desc',
+			},
+		}
+	);
+	const list = axios.get(`${process.env.API_URL}/derivatives/exchanges/list`);
+
+	const res = await Promise.all([derivatives, list]);
 
 	return {
 		props: {
-			derivatives: res.data,
-			page: Number(query.page) || 1,
+			derivatives: res[0].data,
+			totalItems: res[1].data.length,
 		},
 	};
 };
@@ -37,18 +44,11 @@ export interface Derivative {
 	id: number;
 }
 
-const Derivatives: NextPage<{ derivatives: Derivative[]; page: number }> = ({
-	derivatives,
-	page,
-}) => {
+const Derivatives: NextPage<{
+	derivatives: Derivative[];
+	totalItems: number;
+}> = ({ derivatives, totalItems }) => {
 	const columns: TableColumn<Derivative>[] = [
-		{
-			id: 'rank',
-			header: '#',
-			cell: ({ row: { index } }) => <>{(page - 1) * 100 + (index + 1)}</>,
-			size: 50,
-			textAlign: 'start',
-		},
 		{
 			header: 'Name',
 			accessorKey: 'name',
@@ -125,6 +125,11 @@ const Derivatives: NextPage<{ derivatives: Derivative[]; page: number }> = ({
 				description="CoinMarketCap ranks the top cryptocurrency derivatives exchanges using an algorithm based on multiple factors including liquidity and normalized volume."
 			/>
 			<Table columns={columns} data={derivatives} />
+			<Pagination
+				itemsPerPage={100}
+				totalItems={totalItems}
+				uri="/exchanges/derivatives"
+			/>
 		</>
 	);
 };
