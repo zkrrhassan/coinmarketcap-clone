@@ -47,6 +47,7 @@ const CropImage = ({
 				}
 			);
 		},
+		onSuccess: () => refetch(),
 	});
 	const uploadToColudinary = useMutation({
 		mutationFn: async (data: FormData) =>
@@ -60,8 +61,6 @@ const CropImage = ({
 			saveImage.mutate(secure_url);
 
 			toast('Successfuly set image');
-
-			refetch();
 		},
 	});
 
