@@ -40,7 +40,7 @@ model Session {
 model User {
   id            String      @id @default(cuid())
   name          String      @unique @db.VarChar(20)
-  displayName   String?     @db.VarChar(20)
+  displayName   String      @db.VarChar(20)
   email         String      @unique
   emailVerified DateTime?
   birthday      DateTime?
@@ -51,8 +51,10 @@ model User {
   accounts      Account[]
   sessions      Session[]
   watchlist     Watchlist[]
-  posts         Post[]
-  comments      Comment[]
+
+  posts   Post[] @relation("post")
+  replies Post[] @relation("reply")
+  likes   Like[]
 }
 
 model VerificationToken {
@@ -75,27 +77,28 @@ model Watchlist {
 }
 
 model Post {
-  id        String    @id @default(cuid())
-  createdAt DateTime  @default(now()) @db.Timestamp()
-  content   String
-  likes     String[]
-  status    String?
-  comments  Comment[]
+  id            String   @id @default(cuid())
+  content       String
+  postAuthor    User?    @relation("post", fields: [postAuthorId], references: [id], onDelete: Cascade)
+  replyAuthor   User?    @relation("reply", fields: [replyAuthorId], references: [id], onDelete: Cascade)
+  postAuthorId  String?
+  replyAuthorId String?
+  createdAt     DateTime @default(now()) @db.Timestamp()
+  likes         Like[]
+  replies       Post[]   @relation("replies")
+  replyTo       Post?    @relation("replies", fields: [replyToId], references: [id])
+  replyToId     String?
 
-  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId String
+  status String?
 }
 
-model Comment {
-  id        String   @id @unique @default(cuid())
-  content   String
-  status    String?
-  likes     String[]
-  createdAt DateTime @default(now()) @db.Date
+model Like {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @db.Timestamp()
 
-  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  post   Post   @relation(fields: [postId], references: [id])
   postId String
-
-  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId String
 }

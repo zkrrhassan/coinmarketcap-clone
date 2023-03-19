@@ -1,7 +1,6 @@
-import React, { MouseEvent, useEffect, useState } from 'react';
-import { Comment, Post as PrismaPost, User } from '@prisma/client';
+import React, { MouseEvent, useState } from 'react';
+import { Like, Post as PrismaPost, User } from '@prisma/client';
 import axios from 'axios';
-import { useSession } from 'next-auth/react';
 import Post from '../Post/Post';
 import Link from 'next/link';
 import {
@@ -11,60 +10,65 @@ import {
 	PostsContainer,
 } from './ProfilePosts.styled';
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/router';
 
 type Activity = 'posts' | 'comments' | 'likes';
 
-export type PostWithAuthor = PrismaPost & {
-	author: User;
-};
-
-type CommentWithPost = Comment & {
-	post: PostWithAuthor;
-	author: User;
+type UserWithContent = User & {
+	likes: (Like & {
+		post: PrismaPost & {
+			postAuthor: User | null;
+			replyAuthor: User | null;
+			likes: Like[];
+		};
+	})[];
+	posts: (PrismaPost & {
+		postAuthor: User;
+		likes: Like[];
+	})[];
+	replies: (PrismaPost & {
+		likes: Like[];
+		replyAuthor: User;
+		replyTo: PrismaPost & {
+			postAuthor: User | null;
+			replyAuthor: User | null;
+		};
+	})[];
 };
 
 const ProfilePosts = () => {
 	const [activity, setActivity] = useState<Activity>('posts');
-	const { data: session } = useSession();
-	const id = session?.user.id;
-	const { data: posts, refetch } = useQuery<
-		PostWithAuthor[] | CommentWithPost[]
-	>({
-		queryKey: ['userPosts', id, activity],
-		queryFn: async () => {
-			if (activity === 'comments') {
-				return (
-					await axios.get<CommentWithPost[]>('/api/comment/getAll', {
-						params: {
-							userId: id,
-						},
-					})
-				).data;
-			}
-			if (activity === 'likes') {
-				return (
-					await axios.get<PostWithAuthor[]>('/api/post/getLiked', {
-						params: {
-							userId: id,
-						},
-					})
-				).data;
-			}
-			return (
-				await axios.get<PostWithAuthor[]>('/api/post/getAll', {
+	const { query } = useRouter();
+	const username = query.name;
+	const {
+		data: user,
+		refetch,
+		isLoading,
+		isError,
+	} = useQuery({
+		queryKey: ['user', username],
+		queryFn: async () =>
+			(
+				await axios.get<UserWithContent>('/api/user/getByName', {
 					params: {
-						userId: id,
+						username,
 					},
 				})
-			).data;
-		},
-		enabled: !!id,
+			).data,
+
+		enabled: !!username,
 	});
 
 	const changeActivity = (e: MouseEvent) => {
 		const target = e.target as HTMLDivElement;
 		setActivity(target.innerText.toLowerCase() as Activity);
 	};
+
+	if (isLoading) return <div></div>;
+
+	if (isError) return <div></div>;
+
+	const { posts, replies, likes } = user;
 
 	return (
 		<div>
@@ -99,9 +103,9 @@ const ProfilePosts = () => {
 									<Post
 										key={post.id}
 										{...post}
-										image={post.author.image}
-										name={post.author.name}
-										displayName={post.author.name}
+										image={post.postAuthor.image}
+										name={post.postAuthor.name}
+										displayName={post.postAuthor.displayName}
 									/>
 								</a>
 							</Link>
@@ -110,59 +114,86 @@ const ProfilePosts = () => {
 				)}
 				{activity === 'comments' && posts && (
 					<>
-						{(posts as CommentWithPost[]).map(
-							({
-								id,
-								createdAt,
-								status,
-								content,
-								likes,
-								author: commentAuthor,
-								post,
-								post: { author: postAuthor },
-							}) => {
-								const postData = {
-									id: post.id,
-									image: postAuthor.image,
-									name: postAuthor.name,
-									displayName: postAuthor.name,
-									createdAt: post.createdAt,
-									status: post.status,
-									content: post.content,
-									likes: post.likes,
-								};
-								const commentData = {
-									id: id,
-									image: commentAuthor.image,
-									name: commentAuthor.name,
-									displayName: commentAuthor.name,
-									createdAt: createdAt,
-									status: status,
-									content: content,
-									likes: likes,
-								};
+						{replies.map((post) => {
+							if (post.replyTo.postAuthor !== null) {
+								// REPLY TO POST
 								return (
-									<div key={id}>
-										<Post {...postData} commented />
-										<Post {...commentData} noMarginTop isComment />
+									<div key={post.id}>
+										<Post
+											{...post.replyTo}
+											likes={post.likes}
+											image={post.replyTo.postAuthor.image}
+											name={post.replyTo.postAuthor.name}
+											displayName={post.replyTo.postAuthor.displayName}
+											commented
+										/>
+										<Post
+											{...post}
+											likes={post.likes}
+											image={post.replyAuthor.image}
+											name={post.replyAuthor.name}
+											displayName={post.replyAuthor.displayName}
+											noMarginTop
+											isComment
+										/>
+									</div>
+								);
+							} else if (post.replyTo.replyAuthor !== null) {
+								// 'replyAuthor' in post.replyTo
+								// REPLY TO REPLY
+								return (
+									<div key={post.id}>
+										<Post
+											{...post.replyTo}
+											likes={post.likes}
+											image={post.replyTo.replyAuthor.image}
+											name={post.replyTo.replyAuthor.name}
+											displayName={post.replyTo.replyAuthor.displayName}
+											commented
+										/>
+										<Post
+											{...post}
+											likes={post.likes}
+											image={post.replyAuthor.image}
+											name={post.replyAuthor.name}
+											displayName={post.replyAuthor.displayName}
+											noMarginTop
+											isComment
+										/>
 									</div>
 								);
 							}
-						)}
+						})}
 					</>
 				)}
 				{activity === 'likes' && posts && (
 					<>
-						{posts.map((like) => (
-							<Post
-								key={like.id}
-								{...like}
-								image={like.author.image}
-								name={like.author.name}
-								displayName={like.author.name}
-								refetchCallback={refetch}
-							/>
-						))}
+						{likes.map((like) => {
+							const post = like.post;
+							if (post.postAuthor !== null) {
+								return (
+									<Post
+										key={post.id}
+										{...post}
+										image={post.postAuthor.image}
+										name={post.postAuthor.name}
+										displayName={post.postAuthor.name}
+										refetchCallback={refetch}
+									/>
+								);
+							} else if (post.replyAuthor !== null) {
+								return (
+									<Post
+										key={post.id}
+										{...post}
+										image={post.replyAuthor.image}
+										name={post.replyAuthor.name}
+										displayName={post.replyAuthor.name}
+										refetchCallback={refetch}
+									/>
+								);
+							}
+						})}
 					</>
 				)}
 				<NoMoreContent>No more {activity}</NoMoreContent>

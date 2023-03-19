@@ -116,6 +116,11 @@ export const PostButton = styled.button`
 	font-weight: 600;
 	padding: 0px 34px;
 	color: white;
+
+	&:disabled {
+		background: ${({ theme: { colors } }) => colors.colorNeutral5};
+		cursor: not-allowed;
+	}
 `;
 
 export const ImageWrapper = styled.div`

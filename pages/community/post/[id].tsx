@@ -1,65 +1,72 @@
-import { Comment, User } from '@prisma/client';
 import axios from 'axios';
 import BackHistory from 'components/BackHistory/BackHistory';
 import CommunityLayout from 'components/layout/CommunityLayout/CommunityLayout';
 import Post from 'components/pages/community/Post/Post';
-import PostForm from 'components/pages/community/CreatePostForm/CreatePostForm';
-import { PostWithAuthor } from 'components/pages/community/ProfilePosts/ProfilePosts';
-import { GetServerSideProps } from 'next';
-import { NextPageWithLayout } from 'pages/_app';
+import CreatePostForm from 'components/pages/community/CreatePostForm/CreatePostForm';
 import React from 'react';
 import styled from 'styled-components';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/router';
+import Loader from 'styled/elements/Loader';
+import { Like, Post as PrismaPost, User } from '@prisma/client';
 
-export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const { id } = query;
-
-	const post = (
-		await axios.get('http://localhost:3000/api/post/get', {
-			params: {
-				postId: id,
-				withComments: true,
-			},
-		})
-	).data;
-
-	return {
-		props: {
-			post,
-		},
-	};
-};
-type CommentWithAuthor = Comment & {
-	author: User;
-};
-type PostWithAuthorAndComments = PostWithAuthor & {
-	comments: CommentWithAuthor[];
+type PostWithReplies = PrismaPost & {
+	postAuthor: User;
+	replies: (PrismaPost & {
+		replyAuthor: User;
+		likes: Like[];
+	})[];
+	likes: Like[];
 };
 
-const PostDetail: NextPageWithLayout<{ post: PostWithAuthorAndComments }> = ({
-	post,
-}) => {
+const PostDetail = () => {
+	const { query } = useRouter();
+	const {
+		data: post,
+		isLoading,
+		isError,
+		refetch,
+	} = useQuery({
+		queryKey: ['postWithComments'],
+		queryFn: async () =>
+			(
+				await axios.get<PostWithReplies>('/api/post/get', {
+					params: {
+						postId: query.id,
+					},
+				})
+			).data,
+		enabled: !!query.id,
+	});
+
+	if (isLoading) return <Loader />;
+
+	if (isError) return <div />;
+
 	return (
 		<>
 			<BackHistory text="Post detail" />
 			<Post
 				{...post}
-				image={post.author.image}
-				name={post.author.name}
-				displayName={post.author.name}
+				image={post.postAuthor.image}
+				name={post.postAuthor.name}
+				displayName={post.postAuthor.name}
 				detailed
 				marginInline
+				refetchCallback={refetch}
 			/>
-			<PostForm comment postId={post.id} />
+			<CreatePostForm comment postId={post.id} />
 			<div>
-				{post.comments.map((comment) => (
+				{post.replies.map((reply) => (
 					<Post
-						key={comment.id}
-						image={comment.author.image}
-						name={comment.author.name}
-						displayName={comment.author.name}
-						{...comment}
+						key={reply.id}
+						{...reply}
+						image={reply.replyAuthor.image}
+						name={reply.replyAuthor.name}
+						displayName={reply.replyAuthor.name}
 						marginInline
 						isComment
+						refetchCallback={refetch}
 					/>
 				))}
 				<NoMoreComments>No more comments.</NoMoreComments>

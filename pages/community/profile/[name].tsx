@@ -5,10 +5,10 @@ import { NextPageWithLayout } from 'pages/_app';
 
 const Profile: NextPageWithLayout = () => {
 	return (
-		<div style={{ padding: '24px' }}>
+		<>
 			<ProfileInfo />
 			<ProfilePosts />
-		</div>
+		</>
 	);
 };
 

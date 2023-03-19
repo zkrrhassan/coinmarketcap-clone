@@ -5,24 +5,33 @@ const like: NextApiHandler = async (
 	req: NextApiRequest,
 	res: NextApiResponse
 ) => {
-	const { postId } = req.query as { postId: string };
-	const { userId } = req.body as { userId: string };
+	const { postId, userId } = req.query as {
+		postId: string;
+		userId: string;
+	};
 
-	const post = await prisma.post.update({
+	const existingLike = await prisma.like.findFirst({
 		where: {
-			id: postId,
-		},
-		data: {
-			likes: {
-				push: userId,
-			},
+			postId,
+			userId,
 		},
 	});
 
-	if (!post) {
-		return res.status(500).send({ error: `Couldn't update post` });
+	if (existingLike) {
+		return res.status(409).send({ error: `Already liked post` });
 	}
 
-	res.json(post);
+	const like = await prisma.like.create({
+		data: {
+			postId,
+			userId,
+		},
+	});
+
+	if (!like) {
+		return res.status(500).send({ error: `Couldn't like post` });
+	}
+
+	res.json(like);
 };
 export default like;

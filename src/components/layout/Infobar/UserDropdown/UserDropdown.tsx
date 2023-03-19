@@ -49,7 +49,7 @@ const UserDropdown = () => {
 		);
 
 	const {
-		user: { image, name, email },
+		user: { image, name, email, displayName },
 	} = session;
 
 	return (
@@ -78,7 +78,7 @@ const UserDropdown = () => {
 											variant="medium"
 										/>
 										<div>
-											<UserName>Hi, {name}</UserName>
+											<UserName>Hi, {displayName}</UserName>
 											<UserEmail>{email}</UserEmail>
 										</div>
 									</UserPreview>

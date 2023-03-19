@@ -5,19 +5,20 @@ const get: NextApiHandler = async (
 	req: NextApiRequest,
 	res: NextApiResponse
 ) => {
-	const { userId } = req.query as { userId: string };
-
 	const posts = await prisma.post.findMany({
+		where: {
+			NOT: {
+				postAuthor: null,
+			},
+		},
 		orderBy: [
 			{
 				createdAt: 'desc',
 			},
 		],
-		where: {
-			authorId: userId,
-		},
 		include: {
-			author: true,
+			postAuthor: true,
+			likes: true,
 		},
 	});
 

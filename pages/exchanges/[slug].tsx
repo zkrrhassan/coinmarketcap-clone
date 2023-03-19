@@ -10,9 +10,7 @@ import SEO from 'components/SEO/SEO';
 import { capitalize } from 'lodash';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const res = await axios.get(
-		`${process.env.CAPI_URL}/exchanges/${query.slug}`
-	);
+	const res = await axios.get(`${process.env.API_URL}/exchanges/${query.slug}`);
 
 	return {
 		props: {

@@ -1,11 +1,6 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from 'prisma/prisma';
 
-type GetUserRequest = {
-	name: string;
-	email: string;
-};
-
 function exclude<User, Key extends keyof User>(
 	user: User,
 	keys: Key[]
@@ -16,15 +11,46 @@ function exclude<User, Key extends keyof User>(
 	return user;
 }
 
-const getUser: NextApiHandler = async (
+const getByName: NextApiHandler = async (
 	req: NextApiRequest,
 	res: NextApiResponse
 ) => {
 	try {
-		const { name, email } = req.query as GetUserRequest;
+		const { name } = req.query as { name: string };
 
 		const user = await prisma.user.findFirst({
-			where: { name, email },
+			where: { name },
+			include: {
+				posts: {
+					include: {
+						postAuthor: true,
+						likes: true,
+					},
+				},
+				replies: {
+					include: {
+						replyAuthor: true,
+						likes: true,
+						replyTo: {
+							include: {
+								postAuthor: true,
+								replyAuthor: true,
+							},
+						},
+					},
+				},
+				likes: {
+					include: {
+						post: {
+							include: {
+								postAuthor: true,
+								replyAuthor: true,
+								likes: true,
+							},
+						},
+					},
+				},
+			},
 		});
 
 		if (!user) {
@@ -39,4 +65,4 @@ const getUser: NextApiHandler = async (
 		res.status(500).send({ message: 'Internal server error' });
 	}
 };
-export default getUser;
+export default getByName;

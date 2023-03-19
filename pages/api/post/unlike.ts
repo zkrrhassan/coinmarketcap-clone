@@ -1,34 +1,36 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from 'prisma/prisma';
 
-const like: NextApiHandler = async (
+const unlike: NextApiHandler = async (
 	req: NextApiRequest,
 	res: NextApiResponse
 ) => {
-	const { postId } = req.query as { postId: string };
-	const { userId } = req.body as { userId: string };
+	const { postId, userId } = req.query as {
+		postId: string;
+		userId: string;
+	};
 
-	const likes = (
-		await prisma.post.findUnique({
-			where: {
-				id: postId,
-			},
-		})
-	)?.likes;
-
-	const post = await prisma.post.update({
+	const existingLike = await prisma.like.findFirst({
 		where: {
-			id: postId,
-		},
-		data: {
-			likes: likes?.filter((id) => id !== userId),
+			postId,
+			userId,
 		},
 	});
 
-	if (!post) {
-		return res.status(500).send({ error: `Couldn't update post` });
+	if (!existingLike) {
+		return res.status(404).send({ error: `Like not found` });
 	}
 
-	res.json(post);
+	const like = await prisma.like.delete({
+		where: {
+			id: existingLike.id,
+		},
+	});
+
+	if (!like) {
+		return res.status(500).send({ error: `Couldn't create post` });
+	}
+
+	res.json(like);
 };
-export default like;
+export default unlike;

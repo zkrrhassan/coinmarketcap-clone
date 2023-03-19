@@ -5,9 +5,8 @@ const get: NextApiHandler = async (
 	req: NextApiRequest,
 	res: NextApiResponse
 ) => {
-	const { postId, withComments } = req.query as {
+	const { postId } = req.query as {
 		postId: string;
-		withComments?: string;
 	};
 
 	const post = await prisma.post.findUnique({
@@ -15,14 +14,14 @@ const get: NextApiHandler = async (
 			id: postId,
 		},
 		include: {
-			author: true,
-			comments: withComments
-				? {
-						include: {
-							author: true,
-						},
-				  }
-				: false,
+			postAuthor: true,
+			replies: {
+				include: {
+					replyAuthor: true,
+					likes: true,
+				},
+			},
+			likes: true,
 		},
 	});
 

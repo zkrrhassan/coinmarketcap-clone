@@ -9,11 +9,11 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import ProfileImage from 'components/ProfileImage/ProfileImage';
 import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
+import React, { MouseEvent, useEffect, useState } from 'react';
 import { calculateEllapsedTime } from 'utils/calculateEllapsedTime';
 import { useSession } from 'next-auth/react';
 import axios from 'axios';
-import { Post as PrismaPost } from '@prisma/client';
+import { Like } from '@prisma/client';
 import { formatToLongDate } from 'utils/formatDate';
 import {
 	Content,
@@ -39,7 +39,7 @@ export interface PostProps {
 	createdAt: Date;
 	status: string | null;
 	content: string;
-	likes: string[];
+	likes: Like[];
 	detailed?: boolean;
 	marginInline?: boolean;
 	noMarginTop?: boolean;
@@ -56,7 +56,7 @@ const Post = ({
 	createdAt,
 	status,
 	content,
-	likes: initialLikes,
+	likes,
 	detailed,
 	marginInline,
 	noMarginTop,
@@ -65,58 +65,56 @@ const Post = ({
 	refetchCallback,
 }: PostProps) => {
 	const { data: session } = useSession();
-	const [likes, setLikes] = useState<number>(initialLikes.length);
-	const [isLiked, setIsLiked] = useState<boolean>();
+	const [isLiked, setIsLiked] = useState<boolean>(false);
 	const nameFirstLetter = name.charAt(0);
 	const {
 		colors: { downColor },
 	} = useTheme();
-	const postMutation = useMutation({
-		mutationFn: async () => {
-			if (!session) return;
-
-			const params = isComment ? { commentId: id } : { postId: id };
-
-			if (isLiked) {
-				const endpoint = isComment ? '/api/comment/unlike' : '/api/post/unlike';
-				const post = (
-					await axios.post(
-						endpoint,
-						{
-							userId: session.user.id,
-						},
-						{
-							params,
-						}
-					)
-				).data as PrismaPost;
-				setIsLiked(post.likes.includes(session.user.id));
-				setLikes(post.likes.length);
-				refetchCallback && refetchCallback();
-			} else {
-				const endpoint = isComment ? '/api/comment/like' : '/api/post/like';
-				const post = (
-					await axios.post(
-						endpoint,
-						{
-							userId: session.user.id,
-						},
-						{
-							params,
-						}
-					)
-				).data as PrismaPost;
-				setIsLiked(post.likes.includes(session.user.id));
-				setLikes(post.likes.length);
-			}
-		},
+	const like = useMutation({
+		mutationFn: async () =>
+			await axios.patch(
+				'/api/post/like',
+				{},
+				{
+					params: {
+						postId: id,
+						userId: session?.user.id,
+					},
+				}
+			),
+		onSuccess: refetchCallback,
+	});
+	const unlike = useMutation({
+		mutationFn: async () =>
+			await axios.patch(
+				'/api/post/unlike',
+				{},
+				{
+					params: {
+						postId: id,
+						userId: session?.user.id,
+					},
+				}
+			),
+		onSuccess: refetchCallback,
 	});
 
 	useEffect(() => {
 		if (session) {
-			setIsLiked(initialLikes.includes(session.user.id));
+			setIsLiked(likes.some((like) => like.userId === session.user.id));
 		}
-	}, [session]);
+	}, [session, likes]);
+
+	const updateLikes = (event: MouseEvent) => {
+		event.stopPropagation();
+		event.nativeEvent.preventDefault();
+
+		if (isLiked) {
+			unlike.mutate();
+		} else {
+			like.mutate();
+		}
+	};
 
 	return (
 		<PostWrapper
@@ -170,19 +168,13 @@ const Post = ({
 					<ToolbarButton>
 						<FontAwesomeIcon icon={faRetweet} fontSize={18} />
 					</ToolbarButton>
-					<ToolbarButton
-						onClick={(e) => {
-							e.stopPropagation();
-							e.nativeEvent.preventDefault();
-							postMutation.mutate();
-						}}
-					>
+					<ToolbarButton onClick={updateLikes}>
 						<FontAwesomeIcon
 							icon={isLiked ? faHeartBold : faHeart}
 							fontSize={18}
 							color={isLiked ? downColor : undefined}
 						/>
-						<span>{likes}</span>
+						<span>{likes.length}</span>
 					</ToolbarButton>
 					<ToolbarButton>
 						<FontAwesomeIcon icon={faEllipsis} fontSize={18} />
