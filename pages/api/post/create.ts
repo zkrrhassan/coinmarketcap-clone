@@ -5,7 +5,11 @@ const create: NextApiHandler = async (
 	req: NextApiRequest,
 	res: NextApiResponse
 ) => {
-	const { userId } = req.query as { userId: string };
+	const { postAuthorId, replyAuthorId, replyToId } = req.query as {
+		postAuthorId: string | undefined;
+		replyAuthorId: string | undefined;
+		replyToId: string | undefined;
+	};
 	const {
 		status,
 		content,
@@ -13,7 +17,9 @@ const create: NextApiHandler = async (
 
 	const post = await prisma.post.create({
 		data: {
-			authorId: userId,
+			postAuthorId,
+			replyAuthorId,
+			replyToId,
 			status,
 			content,
 			createdAt: new Date(),
