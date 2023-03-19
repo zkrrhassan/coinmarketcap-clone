@@ -16,20 +16,21 @@ import {
 } from './EditProfileForm.styled';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { User } from '@prisma/client';
+import Loader from 'styled/elements/Loader';
+import { toast } from 'react-hot-toast';
 
 const editUserSchema = z.object({
-	displayName: z.string().max(20).nullable(),
+	displayName: z.string().max(20),
 	name: z.string().max(20),
-	biography: z.string().max(160).nullable(),
-	birthday: z.string().nullable(),
-	website: z.string().max(100).nullable(),
-	image: z.string().nullable(),
+	biography: z.string().max(160),
+	birthday: z.string().min(1),
+	website: z.string().max(100),
 });
 
 type EditUserInputs = z.infer<typeof editUserSchema>;
 
 const EditProfileForm = () => {
-	const { register, handleSubmit, setValue } = useForm<EditUserInputs>({
+	const { register, handleSubmit, setValue, watch } = useForm<EditUserInputs>({
 		resolver: zodResolver(editUserSchema),
 		mode: 'onSubmit',
 	});
@@ -47,7 +48,7 @@ const EditProfileForm = () => {
 		queryKey: ['user', name],
 		queryFn: async () =>
 			(
-				await axios.get<Omit<User, 'password'>>(`/api/user/get`, {
+				await axios.get<Omit<User, 'password'>>(`/api/user/getByName`, {
 					params: {
 						name,
 					},
@@ -55,22 +56,17 @@ const EditProfileForm = () => {
 			).data,
 		enabled: !!name,
 		refetchOnWindowFocus: false,
-		onSuccess: ({ biography, birthday, displayName, name, website, image }) => {
-			setValue('biography', biography);
-			setValue(
-				'birthday',
-				birthday ? (birthday as unknown as string).substring(0, 10) : null
-			);
-			setValue('displayName', displayName);
+		onSuccess: ({ biography, birthday, displayName, name, website }) => {
 			setValue('name', name);
-			setValue('website', website);
-			setValue('image', image);
+			biography && setValue('biography', biography);
+			birthday &&
+				setValue('birthday', (birthday as unknown as string).substring(0, 10));
+			displayName && setValue('displayName', displayName);
+			website && setValue('website', website);
 		},
 	});
 	const saveChanges = useMutation({
-		mutationFn: async (
-			userData: Omit<EditUserInputs, 'image'> | Pick<EditUserInputs, 'image'>
-		) => {
+		mutationFn: async (userData: EditUserInputs) => {
 			await axios.post(
 				'/api/user/update',
 				{
@@ -83,30 +79,25 @@ const EditProfileForm = () => {
 				}
 			);
 		},
-
-		onSuccess: () => refetch(),
-	});
-
-	const { ref, ...rest } = register('image', {
-		onChange: async (e: ChangeEvent<HTMLInputElement>) => {
-			if (!e.target.files) return;
-			try {
-				const imageURL = URL.createObjectURL(e.target.files[0]);
-				setImageToCrop(imageURL);
-				setCropperOpen(true);
-			} catch (error) {
-				console.error(error);
-			}
+		onSuccess: () => {
+			toast('Updated successfully');
+			refetch();
 		},
 	});
 
-	const handleCloseCropper = () => {
-		setCropperOpen(false);
-		setValue('image', null);
-	};
-
 	const openFileWindow = () => {
 		fileInputRef.current?.click();
+	};
+
+	const changeImageToCrop = (event: ChangeEvent<HTMLInputElement>) => {
+		if (!event.target.files) return;
+		const imageURL = URL.createObjectURL(event.target.files[0]);
+		setImageToCrop(imageURL);
+		setCropperOpen(true);
+	};
+
+	const handleCloseCropper = () => {
+		setCropperOpen(false);
 	};
 
 	const updateUser = async (inputs: EditUserInputs) => {
@@ -127,28 +118,39 @@ const EditProfileForm = () => {
 
 	const { image, name: username } = user;
 
+	const changedValues = () => {
+		const { biography, birthday, displayName, name, website } = watch();
+
+		if (
+			biography !== user.biography ||
+			birthday !==
+				(user.birthday &&
+					(user.birthday as unknown as string).substring(0, 10)) ||
+			displayName !== user.displayName ||
+			name !== user.name ||
+			website !== user.website
+		)
+			return true;
+		return false;
+	};
+
 	return (
 		<form onSubmit={handleSubmit(updateUser)}>
 			<InputWrapper>
 				<Label as="p">Your Avatar</Label>
 				<AvatarWrapper>
-					{session && (
-						<ProfileImage
-							source={image}
-							firstLetter={username.charAt(0)}
-							width={64}
-							height={64}
-							variant="medium"
-						/>
-					)}
+					<ProfileImage
+						source={image}
+						firstLetter={username.charAt(0)}
+						width={64}
+						height={64}
+						variant="medium"
+					/>
 					<Input
 						type="file"
 						accept="image/png, image/jpg, image/jpeg"
-						ref={(e) => {
-							ref(e);
-							fileInputRef.current = e;
-						}}
-						{...rest}
+						ref={fileInputRef}
+						onChange={changeImageToCrop}
 					/>
 					<AvatarButton type="button" onClick={openFileWindow}>
 						Edit Avatar
@@ -180,7 +182,12 @@ const EditProfileForm = () => {
 				<Label htmlFor="website">Website</Label>
 				<Input type="url" id="website" {...register('website')} />
 			</InputWrapper>
-			<SaveButton type="submit">Save</SaveButton>
+			<SaveButton
+				disabled={saveChanges.isLoading || !changedValues()}
+				type="submit"
+			>
+				{saveChanges.isLoading ? <Loader /> : 'Save'}
+			</SaveButton>
 			{imageToCrop && (
 				<CropImage
 					image={imageToCrop}
