@@ -33,7 +33,7 @@ const Watchlist = () => {
 		refetchOnWindowFocus: false,
 	});
 	// COINS ON WATCHLIST QUERY
-	const _ = useQuery({
+	useQuery({
 		queryKey: ['coins', currentWatchlist],
 		queryFn: async () => {
 			if (currentWatchlist?.coinIds.length === 0) return null;

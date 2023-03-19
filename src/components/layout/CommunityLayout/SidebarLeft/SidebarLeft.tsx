@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { MouseEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -21,14 +21,24 @@ import {
 	StyledLink,
 	ImageWrapper,
 } from './SidebarLeft.styled';
+import { useAppDispatch } from 'hooks/redux';
+import { changeAuthOpen } from 'app/slices/menuSlice';
 
 const SidebarLeft = () => {
-	const { data } = useSession();
+	const { data: session } = useSession();
 	const { pathname } = useRouter();
+	const dispatch = useAppDispatch();
+	const username = session?.user.name;
+
 	const iconProps = {
 		fontSize: 20,
 		width: 20,
 		height: 20,
+	};
+
+	const handleSignupOpen = (event: MouseEvent) => {
+		event.preventDefault();
+		dispatch(changeAuthOpen('signup'));
 	};
 
 	return (
@@ -56,7 +66,7 @@ const SidebarLeft = () => {
 						</Link>
 					</li>
 					<li>
-						<Link href="/community/articles" passHref>
+						<Link href="/community" passHref>
 							<StyledLink>
 								<FontAwesomeIcon
 									icon={
@@ -71,7 +81,7 @@ const SidebarLeft = () => {
 						</Link>
 					</li>
 					<li>
-						<Link href="/community/notifications" passHref>
+						<Link href="/community" passHref>
 							<StyledLink>
 								<FontAwesomeIcon
 									icon={
@@ -86,8 +96,12 @@ const SidebarLeft = () => {
 						</Link>
 					</li>
 					<li>
-						<Link href={`/community/profile/${data?.user?.name}`} passHref>
+						<Link
+							href={`/community/profile/${username ? username : ''}`}
+							passHref
+						>
 							<StyledLink
+								onClick={!session ? handleSignupOpen : undefined}
 								active={
 									pathname === '/community/profile/[name]' ||
 									pathname === '/community/edit-profile'
