@@ -38,7 +38,7 @@ const ProfileInfo = () => {
 		queryKey: ['userProfile', name],
 		queryFn: async () =>
 			(
-				await axios.get<User>(`/api/user/get`, {
+				await axios.get<User>(`/api/user/getByName`, {
 					params: {
 						name,
 					},
