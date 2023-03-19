@@ -39,24 +39,24 @@ type UserWithContent = User & {
 const ProfilePosts = () => {
 	const [activity, setActivity] = useState<Activity>('posts');
 	const { query } = useRouter();
-	const username = query.name;
+	const name = query.name;
 	const {
 		data: user,
 		refetch,
 		isLoading,
 		isError,
 	} = useQuery({
-		queryKey: ['user', username],
+		queryKey: ['user', name],
 		queryFn: async () =>
 			(
 				await axios.get<UserWithContent>('/api/user/getByName', {
 					params: {
-						username,
+						name,
 					},
 				})
 			).data,
 
-		enabled: !!username,
+		enabled: !!name,
 	});
 
 	const changeActivity = (e: MouseEvent) => {
