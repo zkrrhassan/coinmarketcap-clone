@@ -1,21 +1,22 @@
-import { Comment, User } from '@prisma/client';
 import axios from 'axios';
 import BackHistory from 'components/BackHistory/BackHistory';
 import CommunityLayout from 'components/layout/CommunityLayout/CommunityLayout';
 import Post from 'components/pages/community/Post/Post';
 import CreatePostForm from 'components/pages/community/CreatePostForm/CreatePostForm';
-import { PostWithAuthor } from 'components/pages/community/ProfilePosts/ProfilePosts';
 import React from 'react';
 import styled from 'styled-components';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
 import Loader from 'styled/elements/Loader';
+import { Like, Post as PrismaPost, User } from '@prisma/client';
 
-type CommentWithAuthor = Comment & {
-	author: User;
-};
-type PostWithAuthorAndComments = PostWithAuthor & {
-	comments: CommentWithAuthor[];
+type PostWithReplies = PrismaPost & {
+	postAuthor: User;
+	replies: (PrismaPost & {
+		replyAuthor: User;
+		likes: Like[];
+	})[];
+	likes: Like[];
 };
 
 const PostDetail = () => {
@@ -24,14 +25,14 @@ const PostDetail = () => {
 		data: post,
 		isLoading,
 		isError,
+		refetch,
 	} = useQuery({
 		queryKey: ['postWithComments'],
 		queryFn: async () =>
 			(
-				await axios.get<PostWithAuthorAndComments>('/api/post/get', {
+				await axios.get<PostWithReplies>('/api/post/get', {
 					params: {
 						postId: query.id,
-						withComments: true,
 					},
 				})
 			).data,
@@ -47,23 +48,25 @@ const PostDetail = () => {
 			<BackHistory text="Post detail" />
 			<Post
 				{...post}
-				image={post.author.image}
-				name={post.author.name}
-				displayName={post.author.name}
+				image={post.postAuthor.image}
+				name={post.postAuthor.name}
+				displayName={post.postAuthor.name}
 				detailed
 				marginInline
+				refetchCallback={refetch}
 			/>
 			<CreatePostForm comment postId={post.id} />
 			<div>
-				{post.comments.map((comment) => (
+				{post.replies.map((reply) => (
 					<Post
-						key={comment.id}
-						image={comment.author.image}
-						name={comment.author.name}
-						displayName={comment.author.name}
-						{...comment}
+						key={reply.id}
+						{...reply}
+						image={reply.replyAuthor.image}
+						name={reply.replyAuthor.name}
+						displayName={reply.replyAuthor.name}
 						marginInline
 						isComment
+						refetchCallback={refetch}
 					/>
 				))}
 				<NoMoreComments>No more comments.</NoMoreComments>
