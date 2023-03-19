@@ -45,6 +45,7 @@ const ProfileInfo = () => {
 				})
 			).data,
 		enabled: !!name,
+		refetchOnWindowFocus: false,
 	});
 
 	if (isLoading) return <div>Loading...</div>;

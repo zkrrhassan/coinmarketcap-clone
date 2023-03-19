@@ -35,6 +35,7 @@ const getByName: NextApiHandler = async (
 							include: {
 								postAuthor: true,
 								replyAuthor: true,
+								likes: true,
 							},
 						},
 					},

@@ -32,6 +32,7 @@ type UserWithContent = User & {
 		replyTo: PrismaPost & {
 			postAuthor: User | null;
 			replyAuthor: User | null;
+			likes: Like[];
 		};
 	})[];
 };
@@ -57,6 +58,7 @@ const ProfilePosts = () => {
 			).data,
 
 		enabled: !!name,
+		refetchOnWindowFocus: false,
 	});
 
 	const changeActivity = (e: MouseEvent) => {
@@ -69,6 +71,8 @@ const ProfilePosts = () => {
 	if (isError) return <div></div>;
 
 	const { posts, replies, likes } = user;
+
+	console.log(replies);
 
 	return (
 		<div>
@@ -106,6 +110,7 @@ const ProfilePosts = () => {
 										image={post.postAuthor.image}
 										name={post.postAuthor.name}
 										displayName={post.postAuthor.displayName}
+										refetchCallback={refetch}
 									/>
 								</a>
 							</Link>
@@ -121,25 +126,24 @@ const ProfilePosts = () => {
 									<div key={post.id}>
 										<Post
 											{...post.replyTo}
-											likes={post.likes}
 											image={post.replyTo.postAuthor.image}
 											name={post.replyTo.postAuthor.name}
 											displayName={post.replyTo.postAuthor.displayName}
 											commented
+											refetchCallback={refetch}
 										/>
 										<Post
 											{...post}
-											likes={post.likes}
 											image={post.replyAuthor.image}
 											name={post.replyAuthor.name}
 											displayName={post.replyAuthor.displayName}
 											noMarginTop
 											isComment
+											refetchCallback={refetch}
 										/>
 									</div>
 								);
 							} else if (post.replyTo.replyAuthor !== null) {
-								// 'replyAuthor' in post.replyTo
 								// REPLY TO REPLY
 								return (
 									<div key={post.id}>
@@ -150,6 +154,7 @@ const ProfilePosts = () => {
 											name={post.replyTo.replyAuthor.name}
 											displayName={post.replyTo.replyAuthor.displayName}
 											commented
+											refetchCallback={refetch}
 										/>
 										<Post
 											{...post}
@@ -159,6 +164,7 @@ const ProfilePosts = () => {
 											displayName={post.replyAuthor.displayName}
 											noMarginTop
 											isComment
+											refetchCallback={refetch}
 										/>
 									</div>
 								);
