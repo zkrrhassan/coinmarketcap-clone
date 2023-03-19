@@ -26,7 +26,10 @@ import {
 	StatusWrapper,
 } from './CreatePostForm.styled';
 import { useTheme } from 'styled-components';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAppDispatch } from 'hooks/redux';
+import { changeAuthOpen } from 'app/slices/menuSlice';
+import Loader from 'styled/elements/Loader';
 
 interface Inputs {
 	status: 'bullish' | 'bearish' | null;
@@ -38,26 +41,31 @@ interface PostFormProps {
 	postId?: string;
 }
 
+const createPostSchema = z.object({
+	status: z.string().nullish(),
+	content: z.string().min(1).max(999),
+});
+
 const CreatePostForm = ({ comment, postId }: PostFormProps) => {
-	const schema = z.object({
-		status: z.string().nullish(),
-		content: z.string().min(1).max(999),
-	});
 	const { register, handleSubmit, watch, setValue } = useForm<Inputs>({
-		resolver: zodResolver(schema),
+		resolver: zodResolver(createPostSchema),
 	});
+	const dispatch = useAppDispatch();
 	const status = watch('status');
 	const { data: session } = useSession();
 	const userId = session?.user.id;
 	const {
 		colors: { white, upColor, downColor },
 	} = useTheme();
+	const queryClient = useQueryClient();
 	const create = useMutation({
 		mutationFn: async (inputs: Inputs) => {
-			const ednpoint = comment ? '/api/comment/create' : '/api/post/create';
-			const params = comment ? { postId, userId } : { userId };
+			const params = comment
+				? { replyToId: postId, replyAuthorId: userId }
+				: { postAuthorId: userId };
+
 			return await axios.post(
-				ednpoint,
+				'/api/post/create',
 				{
 					...inputs,
 				},
@@ -66,12 +74,18 @@ const CreatePostForm = ({ comment, postId }: PostFormProps) => {
 				}
 			);
 		},
+		onSuccess: () => {
+			toast(`Created ${comment ? 'comment' : 'post'} successfully`);
+			setValue('content', '');
+			setValue('status', null);
+			comment
+				? queryClient.invalidateQueries(['postWithComments'])
+				: queryClient.invalidateQueries(['posts']);
+		},
 	});
 
-	const unselectRadioInput = (
-		e: MouseEvent<HTMLInputElement, globalThis.MouseEvent>
-	) => {
-		const button = e.target as HTMLInputElement;
+	const unselectRadioInput = (event: MouseEvent) => {
+		const button = event.target as HTMLInputElement;
 		if (button.value === status) {
 			setValue('status', null);
 		}
@@ -79,6 +93,11 @@ const CreatePostForm = ({ comment, postId }: PostFormProps) => {
 
 	const onSubmit = async (inputs: Inputs) => {
 		create.mutate(inputs);
+	};
+
+	const handleSignupOpen = (event: MouseEvent) => {
+		event.preventDefault();
+		dispatch(changeAuthOpen('signup'));
 	};
 
 	return (
@@ -95,14 +114,19 @@ const CreatePostForm = ({ comment, postId }: PostFormProps) => {
 			<PostFormWrapper>
 				<form onSubmit={handleSubmit(onSubmit)}>
 					<PostFormHeader>
-						<Link href={``}>
-							<a>
-								<NameWrapper>
-									<DisplayName>ema</DisplayName>
-									<Name>@ema</Name>
-								</NameWrapper>
-							</a>
-						</Link>
+						{session ? (
+							<Link href={``}>
+								<a>
+									<NameWrapper>
+										<DisplayName>{session.user.displayName}</DisplayName>
+										<Name>{session.user.name}</Name>
+									</NameWrapper>
+								</a>
+							</Link>
+						) : (
+							<DisplayName>Guest</DisplayName>
+						)}
+
 						<StatusWrapper>
 							<div>
 								<RadioInput
@@ -116,6 +140,7 @@ const CreatePostForm = ({ comment, postId }: PostFormProps) => {
 									variant="bullish"
 									htmlFor="bullish"
 									selected={status === 'bullish'}
+									onClick={!session ? handleSignupOpen : undefined}
 								>
 									<FontAwesomeIcon
 										icon={faCaretUp}
@@ -136,6 +161,7 @@ const CreatePostForm = ({ comment, postId }: PostFormProps) => {
 									variant="bearish"
 									htmlFor="bearish"
 									selected={status === 'bearish'}
+									onClick={!session ? handleSignupOpen : undefined}
 								>
 									<FontAwesomeIcon
 										icon={faCaretDown}
@@ -159,7 +185,13 @@ const CreatePostForm = ({ comment, postId }: PostFormProps) => {
 								icon={faFaceLaugh}
 							/>
 						</button>
-						<PostButton type="submit">Post</PostButton>
+						<PostButton
+							type="submit"
+							onClick={!session ? handleSignupOpen : undefined}
+							disabled={create.isLoading}
+						>
+							{create.isLoading ? <Loader /> : 'Post'}
+						</PostButton>
 					</ButtonsWrapper>
 				</form>
 			</PostFormWrapper>
