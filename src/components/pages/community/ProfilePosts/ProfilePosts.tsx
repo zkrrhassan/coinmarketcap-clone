@@ -72,8 +72,6 @@ const ProfilePosts = () => {
 
 	const { posts, replies, likes } = user;
 
-	console.log(replies);
-
 	return (
 		<div>
 			<div>
