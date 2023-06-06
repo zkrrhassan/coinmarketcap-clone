@@ -57,7 +57,13 @@
 		"multiSubmenu": false,
 		"list": [
 			{
-				"items": []
+				"items": [
+					{
+						"icon": "FeedIcon.svg",
+						"text": "Feed",
+						"link": "/community"
+					}
+				]
 			}
 		]
 	},
