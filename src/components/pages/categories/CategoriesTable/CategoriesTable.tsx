@@ -35,9 +35,12 @@ const CategoriesTable = ({ categories }: CategoriesTableProps) => {
 			accessorKey: 'top_3_coins',
 			cell: ({ row }) => (
 				<TopCoinsWrapper>
-					{row.original.top_3_coins.map((coin, index) => (
-						<Image key={index} src={coin} alt="" width={24} height={24} />
-					))}
+					{row.original.top_3_coins.map(
+						(coin, index) =>
+							coin.startsWith('https') && (
+								<Image key={index} src={coin} alt="" width={24} height={24} />
+							)
+					)}
 				</TopCoinsWrapper>
 			),
 		},
