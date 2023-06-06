@@ -5,16 +5,17 @@ import { GetServerSideProps } from 'next';
 import React from 'react';
 import { NextPage } from 'next/types';
 import { ExchangeInfoProps } from 'components/pages/exchanges/ExchangeInfo/ExchangeInfo';
-import { ColumnDef } from '@tanstack/react-table';
 import SEO from 'components/SEO/SEO';
 import { capitalize } from 'lodash';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const res = await axios.get(`${process.env.API_URL}/exchanges/${query.slug}`);
+	const data = (
+		await axios.get(`${process.env.API_URL}/exchanges/${query.slug}`)
+	).data;
 
 	return {
 		props: {
-			data: res.data,
+			data,
 			exchange: query.slug,
 		},
 	};

@@ -6,20 +6,18 @@ import SEO from 'components/SEO/SEO';
 import type { GetServerSideProps, NextPage } from 'next';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const exchanges = axios.get(`${process.env.API_URL}/exchanges`, {
-		params: {
-			per_page: 100,
-			page: query.page,
-		},
-	});
-	const list = axios.get(`${process.env.API_URL}/exchanges/list`);
-
-	const res = await Promise.all([exchanges, list]);
+	const exchanges = (
+		await axios.get(`${process.env.API_URL}/exchanges`, {
+			params: {
+				per_page: 100,
+				page: query.page,
+			},
+		})
+	).data;
 
 	return {
 		props: {
-			exchanges: res[0].data,
-			totalItems: res[1].data.length,
+			exchanges,
 		},
 	};
 };
@@ -37,10 +35,7 @@ export interface Exchange {
 	id: number;
 }
 
-const Exchanges: NextPage<{ exchanges: Exchange[]; totalItems: number }> = ({
-	exchanges,
-	totalItems,
-}) => {
+const Exchanges: NextPage<{ exchanges: Exchange[] }> = ({ exchanges }) => {
 	return (
 		<>
 			<SEO
@@ -52,7 +47,7 @@ const Exchanges: NextPage<{ exchanges: Exchange[]; totalItems: number }> = ({
 				description="CoinMarketCap ranks and scores exchanges based on traffic, liquidity, trading volumes, and confidence in the legitimacy of trading volumes reported."
 			/>
 			<ExchangesTable exchanges={exchanges} />
-			<Pagination itemsPerPage={100} totalItems={totalItems} uri="/exchanges" />
+			<Pagination itemsPerPage={100} totalItems={1_000} uri="/exchanges" />
 		</>
 	);
 };

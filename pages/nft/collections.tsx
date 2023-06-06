@@ -6,17 +6,19 @@ import type { GetServerSideProps, NextPage } from 'next';
 import Link from 'next/link';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const coins = await axios.get(`${process.env.API_URL}/nfts/list`, {
-		params: {
-			page: query.page ?? 1,
-			perPage: 100,
-			order: 'market_cap_usd_desc',
-		},
-	});
+	const nfts = (
+		await axios.get(`${process.env.API_URL}/nfts/list`, {
+			params: {
+				page: query.page ?? 1,
+				perPage: 100,
+				order: 'market_cap_usd_desc',
+			},
+		})
+	).data;
 
 	return {
 		props: {
-			nfts: coins.data,
+			nfts,
 		},
 	};
 };
@@ -59,7 +61,11 @@ const Nft: NextPage<NftProps> = ({ nfts }) => {
 		<>
 			<SEO />
 			<Table columns={columns} data={nfts} />
-			<Pagination totalItems={2100} itemsPerPage={100} uri="/nft/collections" />
+			<Pagination
+				totalItems={2_000}
+				itemsPerPage={100}
+				uri="/nft/collections"
+			/>
 		</>
 	);
 };

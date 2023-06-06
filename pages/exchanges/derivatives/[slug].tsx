@@ -13,18 +13,20 @@ import SEO from 'components/SEO/SEO';
 import { capitalize } from 'lodash';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const res = await axios.get(
-		`${process.env.API_URL}/derivatives/exchanges/${query.slug}`,
-		{
-			params: {
-				include_tickers: 'unexpired',
-			},
-		}
-	);
+	const data = (
+		await axios.get(
+			`${process.env.API_URL}/derivatives/exchanges/${query.slug}`,
+			{
+				params: {
+					include_tickers: 'unexpired',
+				},
+			}
+		)
+	).data;
 
 	return {
 		props: {
-			data: res.data,
+			data,
 			derivative: query.slug,
 		},
 	};

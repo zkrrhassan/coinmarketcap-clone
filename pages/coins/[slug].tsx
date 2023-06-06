@@ -4,7 +4,6 @@ import { GetServerSideProps } from 'next';
 import LinksSectionMobile from 'components/pages/coin/LinksSectionMobile/LinksSectionMobile';
 import CoinData from 'components/pages/coin/CoinData/CoinData';
 import ChartSection from 'components/pages/coin/ChartSection/ChartSection';
-import { Time } from 'lightweight-charts';
 import SEO from 'components/SEO/SEO';
 import { capitalize } from 'lodash';
 
@@ -66,15 +65,12 @@ interface CoinProps {
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const getCoinInfo = () => {
-		return axios.get(`${process.env.API_URL}/coins/${query.slug}`);
-	};
-
-	const result = await Promise.all([getCoinInfo()]);
+	const info = (await axios.get(`${process.env.API_URL}/coins/${query.slug}`))
+		.data;
 
 	return {
 		props: {
-			info: result[0].data,
+			info,
 		},
 	};
 };

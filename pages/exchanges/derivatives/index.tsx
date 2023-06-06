@@ -9,24 +9,19 @@ import Link from 'next/link';
 import { formatLargeValue } from 'utils/formatValues';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const derivatives = await axios.get(
-		`${process.env.API_URL}/derivatives/exchanges`,
-		{
+	const derivatives = (
+		await axios.get(`${process.env.API_URL}/derivatives/exchanges`, {
 			params: {
 				per_page: 100,
 				page: query.page ?? 1,
 				order: 'trade_volume_24h_btc_desc',
 			},
-		}
-	);
-	const list = axios.get(`${process.env.API_URL}/derivatives/exchanges/list`);
-
-	const res = await Promise.all([derivatives, list]);
+		})
+	).data;
 
 	return {
 		props: {
-			derivatives: res[0].data,
-			totalItems: res[1].data.length,
+			derivatives,
 		},
 	};
 };
@@ -46,8 +41,7 @@ export interface Derivative {
 
 const Derivatives: NextPage<{
 	derivatives: Derivative[];
-	totalItems: number;
-}> = ({ derivatives, totalItems }) => {
+}> = ({ derivatives }) => {
 	const columns: TableColumn<Derivative>[] = [
 		{
 			header: 'Name',
@@ -127,7 +121,7 @@ const Derivatives: NextPage<{
 			<Table columns={columns} data={derivatives} />
 			<Pagination
 				itemsPerPage={100}
-				totalItems={totalItems}
+				totalItems={1_000}
 				uri="/exchanges/derivatives"
 			/>
 		</>

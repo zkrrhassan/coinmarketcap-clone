@@ -9,11 +9,12 @@ import React from 'react';
 import { Container } from 'styled/elements/Container';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const res = await axios.get(`${process.env.API_URL}/nfts/${query.slug}`);
+	const data = (await axios.get(`${process.env.API_URL}/nfts/${query.slug}`))
+		.data;
 
 	return {
 		props: {
-			data: res.data,
+			data,
 		},
 	};
 };
