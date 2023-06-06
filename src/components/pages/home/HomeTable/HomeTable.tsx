@@ -7,7 +7,7 @@ import Image from 'next/image';
 import PercentageChange from 'components/PercentageChange/PercentageChange';
 import WatchlistButton from 'components/WatchlistButton/WatchlistButton';
 import { useSession } from 'next-auth/react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Watchlist } from '@prisma/client';
 import { startsWithHttp } from 'utils/formatLink';
 import { CoinData } from 'pages';
@@ -28,7 +28,7 @@ const HomeTable = ({ initialCoins }: HomeTableProps) => {
 		useState<(CoinOnWatchlist | CoinData)[]>(initialCoins);
 	const { data: session, status } = useSession();
 	const userId = session?.user.id;
-	const { refetch } = useQuery({
+	const { data, refetch } = useQuery({
 		queryKey: ['watchlistCoins', status],
 		queryFn: async () =>
 			(
@@ -48,6 +48,14 @@ const HomeTable = ({ initialCoins }: HomeTableProps) => {
 	const {
 		colors: { upColor, downColor },
 	} = useTheme();
+
+	useEffect(() => {
+		if (data) {
+			setCoins(processCoinsData(data));
+		} else {
+			setCoins(initialCoins);
+		}
+	}, [initialCoins]);
 
 	const processCoinsData = (onWatchlist: Watchlist['coinIds']) => {
 		return initialCoins.map((coin) => {
@@ -204,7 +212,7 @@ const HomeTable = ({ initialCoins }: HomeTableProps) => {
 		[]
 	);
 
-	return coins && <Table columns={columns} data={coins} />;
+	return <Table columns={columns} data={coins} />;
 };
 
 export default HomeTable;
