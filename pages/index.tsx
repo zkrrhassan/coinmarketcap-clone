@@ -6,24 +6,30 @@ import HomeTable from 'components/pages/home/HomeTable/HomeTable';
 import SEO from 'components/SEO/SEO';
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
-	const coins = (
-		await axios.get(`${process.env.API_URL}/coins/markets`, {
-			params: {
-				vs_currency: 'usd',
-				order: 'market_cap_desc',
-				per_page: 100,
-				sparkline: true,
-				page: query.page ?? 1,
-				price_change_percentage: '1h,24h,7d',
-			},
-		})
-	).data;
+	try {
+		const coins = (
+			await axios.get(`${process.env.API_URL}/coins/markets`, {
+				params: {
+					vs_currency: 'usd',
+					order: 'market_cap_desc',
+					per_page: 100,
+					sparkline: true,
+					page: query.page ?? 1,
+					price_change_percentage: '1h,24h,7d',
+				},
+			})
+		).data;
 
-	return {
-		props: {
-			coins,
-		},
-	};
+		return {
+			props: {
+				coins,
+			},
+		};
+	} catch (errror) {
+		return {
+			props: {},
+		};
+	}
 };
 
 export interface CoinData {
@@ -45,8 +51,7 @@ export interface CoinData {
 }
 
 interface HomeProps {
-	coins: CoinData[];
-	totalCoins: number;
+	coins?: CoinData[];
 }
 
 const Home = ({ coins }: HomeProps) => {
@@ -57,7 +62,12 @@ const Home = ({ coins }: HomeProps) => {
 				title="Today's Cryptocurrency Prices by Market"
 				description="Lorem ipsum dolor sit amet, consectetur adipisicing elit. Optio officia laboriosam ad, rerum iste eaque facilis tempora nam maiores nihil?"
 			/>
-			<HomeTable initialCoins={coins} />
+			{coins ? (
+				<HomeTable initialCoins={coins} />
+			) : (
+				<div>Could not fetch coins</div>
+			)}
+
 			<Pagination totalItems={5_000} itemsPerPage={100} uri="/" />
 		</>
 	);
