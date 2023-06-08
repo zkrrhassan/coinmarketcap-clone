@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import axios from 'axios';
 import { useSession } from 'next-auth/react';
 import { toast } from 'react-hot-toast';
 import ProfileImage from 'components/ProfileImage/ProfileImage';
@@ -26,62 +25,48 @@ import {
 	StatusWrapper,
 } from './CreatePostForm.styled';
 import { useTheme } from 'styled-components';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppDispatch } from 'hooks/redux';
 import { changeAuthOpen } from 'app/slices/menuSlice';
 import Loader from 'styled/elements/Loader';
-
-interface Inputs {
-	status: 'bullish' | 'bearish' | null;
-	content: string;
-}
-
-interface PostFormProps {
-	comment?: boolean;
-	postId?: string;
-}
+import useCreatePost from 'hooks/useCreatePost';
+import { useQueryClient } from '@tanstack/react-query';
 
 const createPostSchema = z.object({
 	status: z.string().nullish(),
 	content: z.string().min(1).max(999),
 });
 
+type CreatePostInputs = z.infer<typeof createPostSchema>;
+
+export type CreatePostBody = CreatePostInputs & {
+	replyToId?: string;
+};
+
+interface PostFormProps {
+	comment?: boolean;
+	postId?: string;
+}
+
 const CreatePostForm = ({ comment, postId }: PostFormProps) => {
-	const { register, handleSubmit, watch, setValue } = useForm<Inputs>({
-		resolver: zodResolver(createPostSchema),
-	});
+	const { register, handleSubmit, watch, setValue } = useForm<CreatePostInputs>(
+		{
+			resolver: zodResolver(createPostSchema),
+		}
+	);
 	const dispatch = useAppDispatch();
 	const status = watch('status');
 	const { data: session } = useSession();
-	const userId = session?.user.id;
 	const {
 		colors: { white, upColor, downColor },
 	} = useTheme();
 	const queryClient = useQueryClient();
-	const create = useMutation({
-		mutationFn: async (inputs: Inputs) => {
-			const params = comment
-				? { replyToId: postId, replyAuthorId: userId }
-				: { postAuthorId: userId };
-
-			return await axios.post(
-				'/api/post/create',
-				{
-					...inputs,
-				},
-				{
-					params,
-				}
-			);
-		},
-		onSuccess: () => {
-			toast(`Created ${comment ? 'comment' : 'post'} successfully`);
-			setValue('content', '');
-			setValue('status', null);
-			comment
-				? queryClient.invalidateQueries(['postWithComments'])
-				: queryClient.invalidateQueries(['posts']);
-		},
+	const createPost = useCreatePost(() => {
+		toast(`Created ${comment ? 'comment' : 'post'} successfully`);
+		setValue('content', '');
+		setValue('status', null);
+		comment
+			? queryClient.invalidateQueries(['postDetails'])
+			: queryClient.invalidateQueries(['posts']);
 	});
 
 	const unselectRadioInput = (event: MouseEvent) => {
@@ -91,8 +76,8 @@ const CreatePostForm = ({ comment, postId }: PostFormProps) => {
 		}
 	};
 
-	const onSubmit = async (inputs: Inputs) => {
-		create.mutate(inputs);
+	const onSubmit = async (inputs: CreatePostInputs) => {
+		createPost.mutate({ ...inputs, replyToId: postId });
 	};
 
 	const handleSignupOpen = (event: MouseEvent) => {
@@ -188,9 +173,9 @@ const CreatePostForm = ({ comment, postId }: PostFormProps) => {
 						<PostButton
 							type="submit"
 							onClick={!session ? handleSignupOpen : undefined}
-							disabled={create.isLoading}
+							disabled={createPost.isLoading}
 						>
-							{create.isLoading ? <Loader /> : 'Post'}
+							{createPost.isLoading ? <Loader /> : 'Post'}
 						</PostButton>
 					</ButtonsWrapper>
 				</form>

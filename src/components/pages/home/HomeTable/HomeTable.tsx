@@ -1,4 +1,3 @@
-import axios from 'axios';
 import Table, { TableColumn } from 'components/Table/Table';
 import { Sparklines, SparklinesLine } from 'react-sparklines';
 import * as S from './HomeTable.styled';
@@ -6,14 +5,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import PercentageChange from 'components/PercentageChange/PercentageChange';
 import WatchlistButton from 'components/WatchlistButton/WatchlistButton';
-import { useSession } from 'next-auth/react';
-import { useState, useMemo, useEffect } from 'react';
-import { Watchlist } from '@prisma/client';
+import { useMemo } from 'react';
 import { startsWithHttp } from 'utils/formatLink';
 import { CoinData } from 'pages';
 import { formatLargeValue, formatPrice } from 'utils/formatValues';
 import { useTheme } from 'styled-components';
-import { useQuery } from '@tanstack/react-query';
+import useMainWatchlist from 'hooks/useMainWatchlist';
 
 export interface CoinOnWatchlist extends CoinData {
 	isOnWatchlist: boolean;
@@ -24,46 +21,13 @@ interface HomeTableProps {
 }
 
 const HomeTable = ({ initialCoins }: HomeTableProps) => {
-	const [coins, setCoins] =
-		useState<(CoinOnWatchlist | CoinData)[]>(initialCoins);
-	const { data: session, status } = useSession();
-	const userId = session?.user.id;
-	const { data, refetch } = useQuery({
-		queryKey: ['watchlistCoins', status],
-		queryFn: async () =>
-			(
-				await axios.get<Watchlist>('/api/watchlist/get', {
-					params: {
-						userId,
-						isMain: true,
-					},
-				})
-			).data.coinIds,
-		onSuccess: (data) => {
-			setCoins(processCoinsData(data));
-		},
-		enabled: !!userId,
-		refetchOnWindowFocus: false,
-	});
+	const { data: watchlist, refetch } = useMainWatchlist();
 	const {
 		colors: { upColor, downColor },
 	} = useTheme();
 
-	useEffect(() => {
-		if (data) {
-			setCoins(processCoinsData(data));
-		} else {
-			setCoins(initialCoins);
-		}
-	}, [initialCoins]);
-
-	const processCoinsData = (onWatchlist: Watchlist['coinIds']) => {
-		return initialCoins.map((coin) => {
-			return {
-				...coin,
-				isOnWatchlist: onWatchlist.includes(coin.id) ?? false,
-			};
-		});
+	const isOnWatchlist = (coinId: string) => {
+		return watchlist && watchlist.coinIds.includes(coinId);
 	};
 
 	const columns = useMemo<TableColumn<CoinOnWatchlist | CoinData>[]>(
@@ -74,12 +38,9 @@ const HomeTable = ({ initialCoins }: HomeTableProps) => {
 				cell: ({ row }) => (
 					<WatchlistButton
 						coinId={row.original.id}
-						isOnWatchlist={
-							'isOnWatchlist' in row.original
-								? row.original.isOnWatchlist
-								: false
-						}
-						watchlistCallback={refetch}
+						isOnWatchlist={isOnWatchlist(row.original.id)}
+						watchlistId={watchlist?.id}
+						refetchCallback={refetch}
 					/>
 				),
 
@@ -209,10 +170,10 @@ const HomeTable = ({ initialCoins }: HomeTableProps) => {
 				minSize: 184,
 			},
 		],
-		[]
+		[watchlist]
 	);
 
-	return <Table columns={columns} data={coins} />;
+	return <Table columns={columns} data={initialCoins} />;
 };
 
 export default HomeTable;

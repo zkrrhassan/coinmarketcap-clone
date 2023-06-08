@@ -1,8 +1,5 @@
 import { faPenToSquare } from '@fortawesome/free-regular-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { User } from '@prisma/client';
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import ProfileImage from 'components/ProfileImage/ProfileImage';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -24,29 +21,16 @@ import {
 	StatisticNumber,
 	ImageWrapper,
 } from './ProfileInfo.styled';
+import useUser from 'hooks/useUser';
 
 const ProfileInfo = () => {
-	const {
-		query: { name },
-	} = useRouter();
+	const { query } = useRouter();
 
 	const {
 		data: user,
 		isLoading,
 		isError,
-	} = useQuery({
-		queryKey: ['userProfile', name],
-		queryFn: async () =>
-			(
-				await axios.get<User>(`/api/user/getByName`, {
-					params: {
-						name,
-					},
-				})
-			).data,
-		enabled: !!name,
-		refetchOnWindowFocus: false,
-	});
+	} = useUser({ name: query.name as string });
 
 	if (isLoading) return <div>Loading...</div>;
 

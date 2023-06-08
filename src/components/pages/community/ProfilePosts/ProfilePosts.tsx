@@ -1,6 +1,4 @@
-import React, { MouseEvent, useState } from 'react';
-import { Like, Post as PrismaPost, User } from '@prisma/client';
-import axios from 'axios';
+import React from 'react';
 import Post from '../Post/Post';
 import Link from 'next/link';
 import {
@@ -9,198 +7,99 @@ import {
 	NoMoreContent,
 	PostsContainer,
 } from './ProfilePosts.styled';
-import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
-
-type Activity = 'posts' | 'comments' | 'likes';
-
-type UserWithContent = User & {
-	likes: (Like & {
-		post: PrismaPost & {
-			postAuthor: User | null;
-			replyAuthor: User | null;
-			likes: Like[];
-		};
-	})[];
-	posts: (PrismaPost & {
-		postAuthor: User;
-		likes: Like[];
-	})[];
-	replies: (PrismaPost & {
-		likes: Like[];
-		replyAuthor: User;
-		replyTo: PrismaPost & {
-			postAuthor: User | null;
-			replyAuthor: User | null;
-			likes: Like[];
-		};
-	})[];
-};
+import useUserPosts from 'hooks/useUserPosts';
+import useUserComments from 'hooks/useUserComments';
+import useUserLikes from 'hooks/useUserLikes';
 
 const ProfilePosts = () => {
-	const [activity, setActivity] = useState<Activity>('posts');
 	const { query } = useRouter();
-	const name = query.name;
-	const {
-		data: user,
-		refetch,
-		isLoading,
-		isError,
-	} = useQuery({
-		queryKey: ['user', name],
-		queryFn: async () =>
-			(
-				await axios.get<UserWithContent>('/api/user/getByName', {
-					params: {
-						name,
-					},
-				})
-			).data,
+	const { data: posts, refetch: refetchPosts } = useUserPosts();
+	const { data: comments, refetch: refetchComments } = useUserComments();
+	const { data: likes, refetch: refetchLikes } = useUserLikes();
 
-		enabled: !!name,
-		refetchOnWindowFocus: false,
-	});
-
-	const changeActivity = (e: MouseEvent) => {
-		const target = e.target as HTMLDivElement;
-		setActivity(target.innerText.toLowerCase() as Activity);
-	};
-
-	if (isLoading) return <div></div>;
-
-	if (isError) return <div></div>;
-
-	const { posts, replies, likes } = user;
+	const isSelected = (type?: string) => query.type === type;
 
 	return (
 		<div>
 			<div>
 				<ActivitiesWrapper>
-					<ActivityItem
-						selected={activity === 'posts'}
-						onClick={changeActivity}
-					>
-						Posts
-					</ActivityItem>
-					<ActivityItem
-						selected={activity === 'comments'}
-						onClick={changeActivity}
-					>
-						Comments
-					</ActivityItem>
-					<ActivityItem
-						selected={activity === 'likes'}
-						onClick={changeActivity}
-					>
-						Likes
-					</ActivityItem>
+					<Link href={`/community/profile/${query.name}/?type=Posts`}>
+						<ActivityItem
+							selected={isSelected('Posts') || isSelected(undefined)}
+						>
+							Posts
+						</ActivityItem>
+					</Link>
+					<Link href={`/community/profile/${query.name}/?type=Comments`}>
+						<ActivityItem selected={isSelected('Comments')}>
+							Comments
+						</ActivityItem>
+					</Link>
+					<Link href={`/community/profile/${query.name}/?type=Likes`}>
+						<ActivityItem selected={isSelected('Likes')}>Likes</ActivityItem>
+					</Link>
 				</ActivitiesWrapper>
 			</div>
 			<PostsContainer>
-				{activity === 'posts' && posts && (
+				{(query.type === 'Posts' || query.type === undefined) && posts && (
 					<>
 						{posts.map((post) => (
-							<Link key={post.id} href={`/community/post/${post.id}`}>
-								<a>
-									<Post
-										key={post.id}
-										{...post}
-										image={post.postAuthor.image}
-										name={post.postAuthor.name}
-										displayName={post.postAuthor.displayName}
-										refetchCallback={refetch}
-									/>
-								</a>
-							</Link>
+							<Post
+								key={post.id}
+								{...post}
+								image={post.author.image}
+								name={post.author.name}
+								displayName={post.author.displayName}
+								refetchCallback={refetchPosts}
+							/>
 						))}
 					</>
 				)}
-				{activity === 'comments' && posts && (
+				{query.type === 'Comments' && comments && (
 					<>
-						{replies.map((post) => {
-							if (post.replyTo.postAuthor !== null) {
-								// REPLY TO POST
-								return (
-									<div key={post.id}>
-										<Post
-											{...post.replyTo}
-											image={post.replyTo.postAuthor.image}
-											name={post.replyTo.postAuthor.name}
-											displayName={post.replyTo.postAuthor.displayName}
-											commented
-											refetchCallback={refetch}
-										/>
-										<Post
-											{...post}
-											image={post.replyAuthor.image}
-											name={post.replyAuthor.name}
-											displayName={post.replyAuthor.displayName}
-											noMarginTop
-											isComment
-											refetchCallback={refetch}
-										/>
-									</div>
-								);
-							} else if (post.replyTo.replyAuthor !== null) {
-								// REPLY TO REPLY
-								return (
-									<div key={post.id}>
-										<Post
-											{...post.replyTo}
-											likes={post.likes}
-											image={post.replyTo.replyAuthor.image}
-											name={post.replyTo.replyAuthor.name}
-											displayName={post.replyTo.replyAuthor.displayName}
-											commented
-											refetchCallback={refetch}
-										/>
-										<Post
-											{...post}
-											likes={post.likes}
-											image={post.replyAuthor.image}
-											name={post.replyAuthor.name}
-											displayName={post.replyAuthor.displayName}
-											noMarginTop
-											isComment
-											refetchCallback={refetch}
-										/>
-									</div>
-								);
-							}
-						})}
+						{comments.map((post) => (
+							<div key={post.id}>
+								<Post
+									{...post.replyTo}
+									image={post.replyTo.author.image}
+									name={post.replyTo.author.name}
+									displayName={post.replyTo.author.displayName}
+									commented
+									refetchCallback={refetchComments}
+								/>
+								<Post
+									{...post}
+									image={post.author.image}
+									name={post.author.name}
+									displayName={post.author.displayName}
+									noMarginTop
+									isComment
+									refetchCallback={refetchComments}
+								/>
+							</div>
+						))}
 					</>
 				)}
-				{activity === 'likes' && posts && (
+				{query.type === 'Likes' && likes && (
 					<>
-						{likes.map((like) => {
-							const post = like.post;
-							if (post.postAuthor !== null) {
+						{likes.map((post) => {
+							if (post.author !== null) {
 								return (
 									<Post
 										key={post.id}
 										{...post}
-										image={post.postAuthor.image}
-										name={post.postAuthor.name}
-										displayName={post.postAuthor.name}
-										refetchCallback={refetch}
-									/>
-								);
-							} else if (post.replyAuthor !== null) {
-								return (
-									<Post
-										key={post.id}
-										{...post}
-										image={post.replyAuthor.image}
-										name={post.replyAuthor.name}
-										displayName={post.replyAuthor.name}
-										refetchCallback={refetch}
+										image={post.author.image}
+										name={post.author.name}
+										displayName={post.author.name}
+										refetchCallback={refetchLikes}
 									/>
 								);
 							}
 						})}
 					</>
 				)}
-				<NoMoreContent>No more {activity}</NoMoreContent>
+				<NoMoreContent>No more {query.type ?? 'Posts'}</NoMoreContent>
 			</PostsContainer>
 		</div>
 	);

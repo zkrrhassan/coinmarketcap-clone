@@ -1,6 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
-import { useSession } from 'next-auth/react';
 import React, { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { Area } from 'react-easy-crop/types';
@@ -12,6 +9,8 @@ import {
 	ZoomRange,
 	CropButton,
 } from './CropImage.styled';
+import useUpdateUser from 'hooks/useUpdateUser';
+import useUploadImage from 'hooks/useUploadImage';
 
 interface CropImageProps {
 	image: string;
@@ -26,41 +25,17 @@ const CropImage = ({
 	visible,
 	closeCallback,
 }: CropImageProps) => {
-	const { data: session } = useSession();
 	const [crop, setCrop] = useState({ x: 0, y: 0 });
 	const [zoom, setZoom] = useState(1);
 	const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 	const onCropComplete = useCallback((_: Area, croppedAreaPixels: Area) => {
 		setCroppedAreaPixels(croppedAreaPixels);
 	}, []);
-	const saveImage = useMutation({
-		mutationFn: async (image: string) => {
-			await axios.post(
-				'/api/user/update',
-				{
-					image,
-				},
-				{
-					params: {
-						userId: session?.user.id,
-					},
-				}
-			);
-		},
-		onSuccess: () => refetch(),
-	});
-	const uploadToColudinary = useMutation({
-		mutationFn: async (data: FormData) =>
-			(
-				await axios.post<{ secure_url: string }>(
-					process.env.NEXT_PUBLIC_CLOUDINARY_URL!,
-					data
-				)
-			).data,
+	const updateUser = useUpdateUser(refetch);
+	const uploadToColudinary = useUploadImage({
 		onSuccess: ({ secure_url }) => {
-			saveImage.mutate(secure_url);
-
 			toast('Successfuly set image');
+			updateUser.mutate({ image: secure_url });
 		},
 	});
 

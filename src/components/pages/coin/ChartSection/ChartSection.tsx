@@ -1,11 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import { SingleValueData, Time } from 'lightweight-charts';
+import useCoinChartData from 'hooks/useCoinChartData';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/router';
 import React, { MouseEvent, useState } from 'react';
 import styled from 'styled-components';
 import { Container } from 'styled/elements/Container';
+import Loader from 'styled/elements/Loader';
 const Chart = dynamic(() => import('components/Chart/Chart'), {
 	ssr: false,
 });
@@ -16,38 +14,24 @@ interface ChartSectionProps {
 
 const ChartSection = ({ name }: ChartSectionProps) => {
 	const [days, setDays] = useState<number>(1);
-	const { query, isReady } = useRouter();
-	const [data, setData] = useState<SingleValueData[]>([]);
-	useQuery({
-		queryKey: ['historical', days],
-		queryFn: async () => {
-			return (
-				await axios.get<{ prices: [number, number][] }>(
-					`${process.env.NEXT_PUBLIC_API_URL}/coins/${query.slug}/market_chart`,
-					{
-						params: {
-							vs_currency: 'usd',
-							days,
-						},
-					}
-				)
-			).data;
-		},
-		onSuccess: (data) => {
-			const initialData = data.prices.map((el) => ({
-				time: (el[0] / 1000) as Time,
-				value: el[1],
-			}));
-			setData(initialData);
-		},
-		enabled: isReady,
-	});
+	const { data: coinChartData, isLoading, isError } = useCoinChartData(days);
 
 	const handleChangeDays = (e: MouseEvent) => {
 		const target = e.target as HTMLButtonElement;
 
 		setDays(Number(target.value));
 	};
+
+	if (isError) return <div>Failed to load data</div>;
+
+	if (isLoading)
+		return (
+			<ChartSectionWrapper>
+				<Container>
+					<Loader />
+				</Container>
+			</ChartSectionWrapper>
+		);
 
 	return (
 		<ChartSectionWrapper>
@@ -78,7 +62,7 @@ const ChartSection = ({ name }: ChartSectionProps) => {
 					</ButtonsWrapper>
 				</OptionsWrapper>
 			</Container>
-			<Chart data={data} colors={{}} />
+			<Chart data={coinChartData} colors={{}} />
 		</ChartSectionWrapper>
 	);
 };

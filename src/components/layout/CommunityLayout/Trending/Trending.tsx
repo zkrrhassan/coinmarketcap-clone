@@ -1,4 +1,3 @@
-import axios from 'axios';
 import React from 'react';
 import Link from 'next/link';
 import {
@@ -10,35 +9,10 @@ import {
 	CoinNumber,
 	CoinName,
 } from './Trending.styled';
-import { useQuery } from '@tanstack/react-query';
-
-interface TrendingCoin {
-	item: {
-		coin_id: number;
-		id: string;
-		name: string;
-		price_btc: number;
-		score: number;
-		slug: string;
-		symbol: string;
-		market_cap_rank: number;
-	};
-}
+import useTrendingCoins from 'hooks/useTrendingCoin';
 
 const Trending = () => {
-	const {
-		data: trending,
-		refetch,
-		isLoading,
-	} = useQuery({
-		queryKey: ['trending'],
-		queryFn: async () =>
-			(
-				await axios.get<{ coins: TrendingCoin[] }>(
-					`${process.env.NEXT_PUBLIC_API_URL}/search/trending`
-				)
-			).data.coins,
-	});
+	const { data: trending, refetch, isLoading } = useTrendingCoins();
 
 	return (
 		<TrendingWrapper>

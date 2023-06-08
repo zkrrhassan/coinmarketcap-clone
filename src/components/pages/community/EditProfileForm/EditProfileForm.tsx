@@ -2,8 +2,6 @@ import React, { ChangeEvent, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useSession } from 'next-auth/react';
-import axios from 'axios';
 import CropImage from '../CropImage/CropImage';
 import ProfileImage from 'components/ProfileImage/ProfileImage';
 import {
@@ -14,22 +12,24 @@ import {
 	Label,
 	SaveButton,
 } from './EditProfileForm.styled';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { User } from '@prisma/client';
 import Loader from 'styled/elements/Loader';
-import { toast } from 'react-hot-toast';
+import useUser from 'hooks/useUser';
+import useUpdateUser from 'hooks/useUpdateUser';
+import { useSession } from 'next-auth/react';
 
 const editUserSchema = z.object({
 	displayName: z.string().max(20),
 	name: z.string().max(20),
-	biography: z.string().max(160),
-	birthday: z.string().min(1),
-	website: z.string().max(100),
+	biography: z.string().max(160).nullable(),
+	birthday: z.string().nullable(),
+	website: z.string().max(100).nullable(),
 });
 
-type EditUserInputs = z.infer<typeof editUserSchema>;
+export type EditUserInputs = z.infer<typeof editUserSchema>;
 
 const EditProfileForm = () => {
+	const { data: session } = useSession({ required: true });
 	const { register, handleSubmit, setValue, watch } = useForm<EditUserInputs>({
 		resolver: zodResolver(editUserSchema),
 		mode: 'onSubmit',
@@ -37,53 +37,26 @@ const EditProfileForm = () => {
 	const [cropperOpen, setCropperOpen] = useState<boolean>(false);
 	const [imageToCrop, setImageToCrop] = useState<string | null>(null);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
-	const { data: session } = useSession();
-	const name = session?.user.name;
 	const {
 		data: user,
-		refetch,
 		isLoading,
 		isError,
-	} = useQuery({
-		queryKey: ['user', name],
-		queryFn: async () =>
-			(
-				await axios.get<Omit<User, 'password'>>(`/api/user/getByName`, {
-					params: {
-						name,
-					},
-				})
-			).data,
-		enabled: !!name,
-		refetchOnWindowFocus: false,
-		onSuccess: ({ biography, birthday, displayName, name, website }) => {
-			setValue('name', name);
-			biography && setValue('biography', biography);
-			birthday &&
-				setValue('birthday', (birthday as unknown as string).substring(0, 10));
-			displayName && setValue('displayName', displayName);
-			website && setValue('website', website);
-		},
-	});
-	const saveChanges = useMutation({
-		mutationFn: async (userData: EditUserInputs) => {
-			await axios.post(
-				'/api/user/update',
-				{
-					...userData,
-				},
-				{
-					params: {
-						userId: session?.user.id,
-					},
-				}
-			);
-		},
-		onSuccess: () => {
-			toast('Updated successfully');
-			refetch();
-		},
-	});
+		refetch,
+	} = useUser({ name: session?.user.name, updateUser: updateValues });
+	const saveChanges = useUpdateUser(refetch);
+
+	function updateValues(user: User) {
+		const { name, biography, birthday, displayName, website } = user;
+
+		setValue('name', name);
+		setValue('displayName', displayName);
+		setValue('biography', biography ?? '');
+		setValue(
+			'birthday',
+			birthday ? (birthday as unknown as string).substring(0, 10) : ''
+		);
+		setValue('website', website ?? '');
+	}
 
 	const openFileWindow = () => {
 		fileInputRef.current?.click();
@@ -101,37 +74,23 @@ const EditProfileForm = () => {
 	};
 
 	const updateUser = async (inputs: EditUserInputs) => {
-		const { biography, birthday, displayName, name, website } = inputs;
-
-		saveChanges.mutate({
-			biography,
-			birthday,
-			displayName,
-			name,
-			website,
-		});
+		saveChanges.mutate(inputs);
 	};
 
 	if (isLoading) return <div></div>;
 
 	if (isError) return <div></div>;
 
-	const { image, name: username } = user;
-
-	const changedValues = () => {
+	const isNotDirty = () => {
 		const { biography, birthday, displayName, name, website } = watch();
 
-		if (
-			biography !== user.biography ||
-			birthday !==
-				(user.birthday &&
-					(user.birthday as unknown as string).substring(0, 10)) ||
-			displayName !== user.displayName ||
-			name !== user.name ||
-			website !== user.website
-		)
-			return true;
-		return false;
+		return (
+			name === (user.name ?? '') &&
+			displayName === (user.displayName ?? '') &&
+			biography === (user.biography ?? '') &&
+			birthday === (user.birthday ?? '') &&
+			website === (user.website ?? '')
+		);
 	};
 
 	return (
@@ -140,8 +99,8 @@ const EditProfileForm = () => {
 				<Label as="p">Your Avatar</Label>
 				<AvatarWrapper>
 					<ProfileImage
-						source={image}
-						firstLetter={username.charAt(0)}
+						source={user.image}
+						firstLetter={user.name.charAt(0)}
 						width={64}
 						height={64}
 						variant="medium"
@@ -183,7 +142,7 @@ const EditProfileForm = () => {
 				<Input type="url" id="website" {...register('website')} />
 			</InputWrapper>
 			<SaveButton
-				disabled={saveChanges.isLoading || !changedValues()}
+				disabled={saveChanges.isLoading || isNotDirty()}
 				type="submit"
 			>
 				{saveChanges.isLoading ? <Loader /> : 'Save'}

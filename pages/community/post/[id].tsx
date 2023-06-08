@@ -1,43 +1,14 @@
-import axios from 'axios';
 import BackHistory from 'components/BackHistory/BackHistory';
 import CommunityLayout from 'components/layout/CommunityLayout/CommunityLayout';
 import Post from 'components/pages/community/Post/Post';
 import CreatePostForm from 'components/pages/community/CreatePostForm/CreatePostForm';
 import React from 'react';
 import styled from 'styled-components';
-import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/router';
 import Loader from 'styled/elements/Loader';
-import { Like, Post as PrismaPost, User } from '@prisma/client';
-
-type PostWithReplies = PrismaPost & {
-	postAuthor: User;
-	replies: (PrismaPost & {
-		replyAuthor: User;
-		likes: Like[];
-	})[];
-	likes: Like[];
-};
+import usePost from 'hooks/usePost';
 
 const PostDetail = () => {
-	const { query } = useRouter();
-	const {
-		data: post,
-		isLoading,
-		isError,
-		refetch,
-	} = useQuery({
-		queryKey: ['postWithComments'],
-		queryFn: async () =>
-			(
-				await axios.get<PostWithReplies>('/api/post/get', {
-					params: {
-						postId: query.id,
-					},
-				})
-			).data,
-		enabled: !!query.id,
-	});
+	const { data: post, isLoading, isError, refetch } = usePost();
 
 	if (isLoading) return <Loader />;
 
@@ -48,9 +19,9 @@ const PostDetail = () => {
 			<BackHistory text="Post detail" />
 			<Post
 				{...post}
-				image={post.postAuthor.image}
-				name={post.postAuthor.name}
-				displayName={post.postAuthor.name}
+				image={post.author.image}
+				name={post.author.name}
+				displayName={post.author.name}
 				detailed
 				marginInline
 				refetchCallback={refetch}
@@ -61,9 +32,9 @@ const PostDetail = () => {
 					<Post
 						key={reply.id}
 						{...reply}
-						image={reply.replyAuthor.image}
-						name={reply.replyAuthor.name}
-						displayName={reply.replyAuthor.name}
+						image={reply.author.image}
+						name={reply.author.name}
+						displayName={reply.author.name}
 						marginInline
 						isComment
 						refetchCallback={refetch}

@@ -1,21 +1,10 @@
-import { Like, Post as PrismaPost, User } from '@prisma/client';
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import React from 'react';
 import Post from '../Post/Post';
 import { Search, SearchButton, SearchContainer } from './FeedPosts.styled';
-
-type PostWithAuthor = PrismaPost & {
-	postAuthor: User;
-	likes: Like[];
-};
+import useAllPosts from 'hooks/useAllPosts';
 
 const FeedPosts = () => {
-	const { data: posts } = useQuery({
-		queryKey: ['posts'],
-		queryFn: async () =>
-			(await axios.get<PostWithAuthor[]>('/api/post/getAll')).data,
-	});
+	const { data: posts, refetch } = useAllPosts();
 
 	return (
 		<div>
@@ -29,10 +18,11 @@ const FeedPosts = () => {
 						<Post
 							key={post.id}
 							{...post}
-							image={post.postAuthor.image}
-							name={post.postAuthor.name}
-							displayName={post.postAuthor.name}
+							image={post.author.image}
+							name={post.author.name}
+							displayName={post.author.name}
 							marginInline
+							refetchCallback={refetch}
 						/>
 					))}
 				</div>

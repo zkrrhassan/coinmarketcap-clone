@@ -12,7 +12,6 @@ import Link from 'next/link';
 import React, { MouseEvent, useEffect, useState } from 'react';
 import { calculateEllapsedTime } from 'utils/calculateEllapsedTime';
 import { useSession } from 'next-auth/react';
-import axios from 'axios';
 import { Like } from '@prisma/client';
 import { formatToLongDate } from 'utils/formatDate';
 import {
@@ -29,7 +28,8 @@ import {
 	ImageWrapper,
 } from './Post.styled';
 import { useTheme } from 'styled-components';
-import { useMutation } from '@tanstack/react-query';
+import useLike from 'hooks/useLike';
+import useUnlike from 'hooks/useUnlike';
 
 export interface PostProps {
 	id: string;
@@ -45,7 +45,7 @@ export interface PostProps {
 	noMarginTop?: boolean;
 	commented?: boolean;
 	isComment?: boolean;
-	refetchCallback?: () => void;
+	refetchCallback: () => void;
 }
 
 const Post = ({
@@ -70,34 +70,8 @@ const Post = ({
 	const {
 		colors: { downColor },
 	} = useTheme();
-	const like = useMutation({
-		mutationFn: async () =>
-			await axios.patch(
-				'/api/post/like',
-				{},
-				{
-					params: {
-						postId: id,
-						userId: session?.user.id,
-					},
-				}
-			),
-		onSuccess: refetchCallback,
-	});
-	const unlike = useMutation({
-		mutationFn: async () =>
-			await axios.patch(
-				'/api/post/unlike',
-				{},
-				{
-					params: {
-						postId: id,
-						userId: session?.user.id,
-					},
-				}
-			),
-		onSuccess: refetchCallback,
-	});
+	const like = useLike(refetchCallback);
+	const unlike = useUnlike(refetchCallback);
 
 	useEffect(() => {
 		if (session) {
@@ -110,9 +84,9 @@ const Post = ({
 		event.nativeEvent.preventDefault();
 
 		if (isLiked) {
-			unlike.mutate();
+			unlike.mutate(id);
 		} else {
-			like.mutate();
+			like.mutate(id);
 		}
 	};
 
@@ -134,14 +108,10 @@ const Post = ({
 			<ContentWrapper>
 				<PostInfo>
 					<Link href={`/community/profile/${name}`}>
-						<a>
-							<DisplayName>{displayName}</DisplayName>
-						</a>
+						<DisplayName>{displayName}</DisplayName>
 					</Link>
 					<Link href={`/community/profile/${name}`}>
-						<a>
-							<Name>@{name}</Name>
-						</a>
+						<Name>@{name}</Name>
 					</Link>
 					{!detailed && (
 						<Name>
@@ -157,10 +127,14 @@ const Post = ({
 						</Status>
 					)}
 				</PostInfo>
-				<Content detailed={detailed}>{content}</Content>
-				{detailed && (
-					<CreatedAt>{formatToLongDate(new Date(createdAt))}</CreatedAt>
-				)}
+				<Link href={`/community/post/${id}`} passHref>
+					<a>
+						<Content detailed={detailed}>{content}</Content>
+						{detailed && (
+							<CreatedAt>{formatToLongDate(new Date(createdAt))}</CreatedAt>
+						)}
+					</a>
+				</Link>
 				<PostToolbar>
 					<ToolbarButton>
 						<FontAwesomeIcon icon={faCommentDots} fontSize={18} />

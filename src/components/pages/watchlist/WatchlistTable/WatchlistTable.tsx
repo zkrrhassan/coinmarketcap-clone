@@ -1,5 +1,5 @@
 import Table, { TableColumn } from 'components/Table/Table';
-import React from 'react';
+import React, { useState } from 'react';
 import { CoinData } from 'pages';
 import { Sparklines, SparklinesLine } from 'react-sparklines';
 import PercentageChange from 'components/PercentageChange/PercentageChange';
@@ -14,21 +14,33 @@ import {
 	CoinSymbol,
 	CoinFullName,
 } from './WatchlistTable.styled';
+import useWatchlistCoins from 'hooks/useWatchlistCoins';
+import { Watchlist } from '@prisma/client';
 
 interface WatchlistTableProps {
-	coins: CoinData[];
-	watchlistCallback: () => void;
+	currentWatchlist: Watchlist;
+	updateCurrentWatchlist: (watchlist: Watchlist) => void;
 }
 
-const WatchlistTable = ({ coins, watchlistCallback }: WatchlistTableProps) => {
+const WatchlistTable = ({
+	currentWatchlist,
+	updateCurrentWatchlist,
+}: WatchlistTableProps) => {
+	const [watchlistCoins, setWatchlistCoins] = useState<CoinData[]>();
+	const { isError } = useWatchlistCoins({
+		currentWatchlist,
+		setWatchlistCoins,
+	});
+
 	const columns: TableColumn<CoinData>[] = [
 		{
 			id: 'add-to-watchlist',
 			cell: ({ row }) => (
 				<WatchlistButton
 					coinId={row.original.id}
-					watchlistCallback={watchlistCallback}
+					watchlistId={currentWatchlist?.id}
 					isOnWatchlist={true}
+					updateWatchlist={updateCurrentWatchlist}
 				/>
 			),
 			size: 50,
@@ -143,7 +155,14 @@ const WatchlistTable = ({ coins, watchlistCallback }: WatchlistTableProps) => {
 		},
 	];
 
-	return <Table columns={columns} data={coins} />;
+	if (isError) return <div>Could not load coins</div>;
+
+	if (!watchlistCoins) return <div>Loading...</div>;
+
+	if (watchlistCoins.length === 0)
+		return <div>There are no coins on this watchlist</div>;
+
+	return <Table columns={columns} data={watchlistCoins} />;
 };
 
 export default WatchlistTable;

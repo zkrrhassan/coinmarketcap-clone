@@ -1,39 +1,11 @@
-import axios from 'axios';
 import React from 'react';
 import { formatLargeValue, formatPercentageValue } from 'utils/formatValues';
 import GlobalStatistic from 'components/layout/Infobar/GlobalStatistics/GlobalStatistic';
 import { GlobalStatisticsContainer } from 'components/layout/Infobar/GlobalStatistics/GlobalStatistics.styled';
-import { useQuery } from '@tanstack/react-query';
-
-interface CoinsGlobal {
-	active_cryptocurrencies: number;
-	markets: number;
-	total_market_cap: {
-		[key: string]: number;
-	};
-	total_volume: {
-		[key: string]: number;
-	};
-	market_cap_percentage: {
-		[key: string]: number;
-	};
-	market_cap_change_percentage_24h_usd: number;
-}
+import useGlobalStatistics from 'hooks/useGlobalStatistics';
 
 const GlobalStatistics = () => {
-	const {
-		data: global,
-		isLoading,
-		isError,
-	} = useQuery({
-		queryKey: ['global'],
-		queryFn: async () =>
-			(
-				await axios.get<{ data: CoinsGlobal }>(
-					`${process.env.NEXT_PUBLIC_API_URL}/global`
-				)
-			).data.data,
-	});
+	const { data: global, isLoading, isError } = useGlobalStatistics();
 
 	if (isLoading || isError) return <GlobalStatisticsContainer />;
 
