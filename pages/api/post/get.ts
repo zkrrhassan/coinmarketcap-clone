@@ -1,27 +1,45 @@
+import { Like, Post, User } from '@prisma/client';
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from 'prisma/prisma';
 
-const get: NextApiHandler = async (
-	req: NextApiRequest,
+export type PostDetails = Post & {
+	author: User;
+	likes: Like[];
+	replies: (Post & {
+		author: User;
+		likes: Like[];
+	})[];
+};
+
+interface GetPostApiRequest extends NextApiRequest {
+	query: {
+		id?: string;
+	};
+}
+
+const getPost: NextApiHandler = async (
+	req: GetPostApiRequest,
 	res: NextApiResponse
 ) => {
-	const { postId } = req.query as {
-		postId: string;
-	};
+	if (req.method !== 'GET') {
+		return res.status(405).json({ error: 'Method not allowed' });
+	}
+
+	const { id } = req.query;
 
 	const post = await prisma.post.findUnique({
 		where: {
-			id: postId,
+			id,
 		},
 		include: {
-			postAuthor: true,
+			author: true,
+			likes: true,
 			replies: {
 				include: {
-					replyAuthor: true,
+					author: true,
 					likes: true,
 				},
 			},
-			likes: true,
 		},
 	});
 
@@ -29,6 +47,6 @@ const get: NextApiHandler = async (
 		return res.status(500).send({ error: `Couldn't create post` });
 	}
 
-	res.json(post);
+	return res.status(200).json(post);
 };
-export default get;
+export default getPost;

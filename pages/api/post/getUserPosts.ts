@@ -1,16 +1,27 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from 'prisma/prisma';
 
-const get: NextApiHandler = async (
-	req: NextApiRequest,
+interface GetUserPostsApiRequest extends NextApiRequest {
+	query: {
+		userName?: string;
+	};
+}
+
+const getUserPosts: NextApiHandler = async (
+	req: GetUserPostsApiRequest,
 	res: NextApiResponse
 ) => {
 	if (req.method !== 'GET') {
 		return res.status(405).json({ error: 'Method not allowed' });
 	}
 
+	const { userName } = req.query;
+
 	const posts = await prisma.post.findMany({
 		where: {
+			author: {
+				name: userName,
+			},
 			replyToId: {
 				equals: null,
 			},
@@ -32,4 +43,4 @@ const get: NextApiHandler = async (
 
 	return res.status(200).json(posts);
 };
-export default get;
+export default getUserPosts;

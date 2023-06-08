@@ -1,38 +1,46 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
-import { PageConfig } from 'next/types';
+import { getSession } from 'next-auth/react';
 import { prisma } from 'prisma/prisma';
 
-const getUser: NextApiHandler = async (
-	req: NextApiRequest,
+export interface UpdateUserBody {
+	displayName?: string;
+	name?: string;
+	biography?: string | null;
+	birthday?: string | null;
+	website?: string | null;
+	image?: string | null;
+}
+
+interface UpdateUserApiRequest extends NextApiRequest {
+	body: UpdateUserBody;
+}
+
+const updateUser: NextApiHandler = async (
+	req: UpdateUserApiRequest,
 	res: NextApiResponse
 ) => {
-	const { userId } = req.query;
-	const {
-		displayName,
-		name,
-		biography,
-		birthday,
-		website,
-		image,
-	}: {
-		displayName: string;
-		name: string;
-		biography: string;
-		birthday: string;
-		website: string;
-		image: string;
-	} = req.body;
+	const session = await getSession({ req });
+
+	if (!session) {
+		return res.status(401).json({ error: 'Unauthorized' });
+	}
+
+	if (req.method !== 'PATCH') {
+		return res.status(405).json({ error: 'Method not allowed' });
+	}
+
+	const { displayName, name, biography, birthday, website, image } = req.body;
 
 	const user = await prisma.user.update({
 		where: {
-			id: userId as string,
+			id: session.user.id,
 		},
 		data: {
 			displayName,
 			name,
 			biography,
 			website,
-			birthday: new Date(birthday),
+			birthday: birthday && new Date(birthday),
 			image,
 		},
 	});
@@ -43,15 +51,6 @@ const getUser: NextApiHandler = async (
 			.send({ error: `Couldn't find user with name ${name}` });
 	}
 
-	res.json(user);
+	return res.status(200).json(user);
 };
-export default getUser;
-
-export const config: PageConfig = {
-	api: {
-		bodyParser: {
-			sizeLimit: '1mb',
-		},
-		responseLimit: '1mb',
-	},
-};
+export default updateUser;

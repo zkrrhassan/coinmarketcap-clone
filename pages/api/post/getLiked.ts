@@ -1,18 +1,26 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from 'prisma/prisma';
 
-const get: NextApiHandler = async (
-	req: NextApiRequest,
+interface GetLikedApiRequest extends NextApiRequest {
+	query: {
+		userName?: string;
+	};
+}
+
+const getLiked: NextApiHandler = async (
+	req: GetLikedApiRequest,
 	res: NextApiResponse
 ) => {
 	if (req.method !== 'GET') {
 		return res.status(405).json({ error: 'Method not allowed' });
 	}
 
-	const posts = await prisma.post.findMany({
+	const { userName } = req.query;
+
+	const likes = await prisma.like.findMany({
 		where: {
-			replyToId: {
-				equals: null,
+			user: {
+				name: userName as string,
 			},
 		},
 		orderBy: [
@@ -21,15 +29,21 @@ const get: NextApiHandler = async (
 			},
 		],
 		include: {
-			author: true,
-			likes: true,
+			post: {
+				include: {
+					author: true,
+					likes: true,
+				},
+			},
 		},
 	});
 
-	if (!posts) {
+	if (!likes) {
 		return res.status(500).send({ error: `Couldn't create posts` });
 	}
 
+	const posts = likes.map((like) => like.post);
+
 	return res.status(200).json(posts);
 };
-export default get;
+export default getLiked;

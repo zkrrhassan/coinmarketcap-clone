@@ -17,10 +17,8 @@ export default async function handler(
 		const { email, password } = req.body;
 		const hashedPassword = await bcrypt.hash(password, 12);
 
-		// generate user name
 		const name = await generateUserName();
 
-		//create user
 		const user = await prisma.user.create({
 			data: {
 				email,
@@ -30,7 +28,6 @@ export default async function handler(
 			},
 		});
 
-		//create first watchlist
 		await prisma.watchlist.create({
 			data: {
 				name: 'My First Watchlist',

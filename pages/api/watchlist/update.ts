@@ -1,23 +1,46 @@
+import { WatchlistInputs } from 'components/pages/watchlist/WatchlistModal/WatchlistModal';
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
+import { getSession } from 'next-auth/react';
 import { prisma } from 'prisma/prisma';
 
-const removeCoin: NextApiHandler = async (
-	req: NextApiRequest,
+interface UpdateWatchlistApiRequest extends NextApiRequest {
+	query: {
+		id?: string;
+	};
+	body: WatchlistInputs;
+}
+
+const updateWatchlist: NextApiHandler = async (
+	req: UpdateWatchlistApiRequest,
 	res: NextApiResponse
 ) => {
-	const { watchlistId } = req.query;
-	const { name, isMain } = req.body;
+	const session = await getSession({ req });
+
+	if (!session) {
+		return res.status(401).json({ error: 'Unauthorized' });
+	}
+
+	if (req.method !== 'PATCH') {
+		return res.status(405).json({ error: 'Method not allowed' });
+	}
+
+	const { id } = req.query;
+	const { name, description } = req.body;
 
 	const updated = await prisma.watchlist.update({
 		where: {
-			id: watchlistId as string,
+			id,
 		},
 		data: {
-			name: name,
-			isMain: isMain ? Boolean(isMain) : undefined,
+			name,
+			description,
 		},
 	});
 
-	res.json(updated);
+	if (!updated) {
+		return res.status(500).json({ error: 'Internal server error' });
+	}
+
+	return res.status(200).json(updated);
 };
-export default removeCoin;
+export default updateWatchlist;
