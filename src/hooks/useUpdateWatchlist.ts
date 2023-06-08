@@ -3,7 +3,7 @@ import axios from 'axios';
 import { WatchlistInputs } from 'components/pages/watchlist/WatchlistModal/WatchlistModal';
 
 const updateWatchlist = (id: string, inputs: WatchlistInputs) =>
-	axios.patch('api/watchlist/update', inputs, {
+	axios.patch('/api/watchlist/update', inputs, {
 		params: {
 			id,
 		},

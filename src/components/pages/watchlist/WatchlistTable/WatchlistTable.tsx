@@ -38,7 +38,7 @@ const WatchlistTable = ({
 			cell: ({ row }) => (
 				<WatchlistButton
 					coinId={row.original.id}
-					watchlistId={currentWatchlist?.id}
+					watchlistId={currentWatchlist.id}
 					isOnWatchlist={true}
 					updateWatchlist={updateCurrentWatchlist}
 				/>

@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useSession } from 'next-auth/react';
 
 const fetchMainWatchlist = async () =>
-	(await axios.get<Watchlist>('api/watchlist/getMain')).data;
+	(await axios.get<Watchlist>('/api/watchlist/getMain')).data;
 
 const useMainWatchlist = () => {
 	const { data: session } = useSession();

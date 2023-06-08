@@ -3,7 +3,7 @@ import axios from 'axios';
 import { WatchlistInputs } from 'components/pages/watchlist/WatchlistModal/WatchlistModal';
 
 const createWatchlist = (inpits: WatchlistInputs) =>
-	axios.post('api/watchlist/create', inpits);
+	axios.post('/api/watchlist/create', inpits);
 
 const useCreateWatchlist = () => {
 	const queryClient = useQueryClient();
