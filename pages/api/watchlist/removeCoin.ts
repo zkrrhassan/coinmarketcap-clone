@@ -2,8 +2,17 @@ import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { getSession } from 'next-auth/react';
 import { prisma } from 'prisma/prisma';
 
+interface RemoveCoinApiRequest extends NextApiRequest {
+	query: {
+		watchlistId?: string;
+	};
+	body: {
+		coinId: string;
+	};
+}
+
 const removeCoin: NextApiHandler = async (
-	req: NextApiRequest,
+	req: RemoveCoinApiRequest,
 	res: NextApiResponse
 ) => {
 	const session = await getSession({ req });
@@ -16,7 +25,8 @@ const removeCoin: NextApiHandler = async (
 		return res.status(405).json({ error: 'Method not allowed' });
 	}
 
-	const { coinId, watchlistId } = req.query;
+	const { watchlistId } = req.query;
+	const { coinId } = req.body;
 
 	const watchlist = await prisma.watchlist.findFirst({
 		where: {
